@@ -2,224 +2,307 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Industrie 4.0 · Hiro-Sonne & Sensordaten</title>
-  <!-- Gleiche Bibliotheksversionen wie im Ausgangscode; Internet erforderlich. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Industrie 4.0 · AR Mockup</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
   <style>
-    :root { color-scheme:dark; --panel:rgba(14,18,26,.88); --border:rgba(120,200,255,.28); --accent:#35c8ff; --text:#eaf2fb; --dim:#a5b6c9; --sun:#ffd34d; }
-    * { box-sizing:border-box; }
-    body { margin:0; overflow:hidden; background:#05070b; color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; }
-    /* Wichtig: Video/Canvas NICHT mit width/height:100vw/100vh !important
-       überschreiben. AR.js berechnet passende Größen und Ausschnitte selbst. */
-    #statusbar { position:fixed; inset:0 0 auto; z-index:20; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:18px; background:linear-gradient(rgba(5,7,11,.9),transparent); pointer-events:none; }
-    .brand { font-size:15px; font-weight:650; }
-    .brand small { display:block; margin-top:3px; color:var(--dim); font-size:11px; font-weight:400; }
-    #tracking { display:flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid var(--border); border-radius:30px; background:var(--panel); font-size:12px; }
-    .indicator { width:9px; height:9px; flex-shrink:0; border-radius:50%; background:#6b7c92; }
-    #tracking.active .indicator { background:#46d998; box-shadow:0 0 12px #46d998; }
-    #overlay { position:fixed; right:18px; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:15; width:min(340px,calc(100vw - 36px)); border:1px solid var(--border); border-radius:16px; background:var(--panel); backdrop-filter:blur(10px); overflow:hidden; }
-    [hidden] { display:none !important; }
-    .panel-head { padding:15px 16px; border-bottom:1px solid rgba(255,255,255,.1); }
-    h2 { margin:0; font-size:16px; }
-    .panel-head p { margin:5px 0 0; color:var(--dim); font-size:12px; }
-    .demo { display:inline-block; color:var(--sun); font-size:10px; letter-spacing:1px; margin-bottom:7px; font-weight:700; }
-    .panel-body { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:16px; }
-    .label { display:block; font-size:12px; color:var(--dim); margin-bottom:5px; }
-    .value { font-size:24px; font-weight:650; font-variant-numeric:tabular-nums; }
-    .unit { font-size:13px; color:var(--dim); }
-    .temperature { color:var(--sun); }
-    .panel-foot { padding:0 16px 14px; color:var(--dim); font-size:11px; line-height:1.5; }
-    #hint { position:fixed; left:50%; bottom:30px; transform:translateX(-50%); z-index:12; width:max-content; max-width:calc(100vw - 36px); border:1px solid var(--border); border-radius:14px; background:var(--panel); padding:12px 18px; text-align:center; font-size:13px; }
-    #start-screen { position:fixed; inset:0; z-index:30; display:grid; place-items:center; padding:24px; background:radial-gradient(ellipse at top,#20334b,#05070b 70%); }
-    .start-card { max-width:430px; padding:28px; border:1px solid var(--border); border-radius:20px; background:var(--panel); }
-    h1 { font-size:28px; line-height:1.15; margin:12px 0; }
-    .start-card p { color:var(--dim); font-size:14px; line-height:1.6; }
-    button { border:0; border-radius:10px; padding:13px 18px; background:var(--sun); color:#19170e; font:600 14px 'Segoe UI',sans-serif; cursor:pointer; }
-    button:disabled { opacity:.5; cursor:wait; }
-    button:focus-visible { outline:3px solid white; outline-offset:4px; }
-    #error { color:#ffb5ae; font-size:13px; line-height:1.5; }
-    @media(max-width:520px) { #statusbar { padding:12px; } .brand { font-size:13px; } #tracking { font-size:11px; } #overlay { right:18px; } .panel-body { gap:12px; } }
+    :root {
+      color-scheme: dark;
+      --bg-panel: rgba(14, 18, 26, 0.82);
+      --border: rgba(120, 200, 255, 0.28);
+      --accent: #35c8ff;
+      --accent-dim: rgba(53, 200, 255, 0.14);
+      --text: #eaf2fb;
+      --text-dim: #8ea3ba;
+      --ok: #46d998;
+      --idle: #6b7c92;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      overflow: hidden;
+      background: #05070b;
+    }
+
+    video, canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: contain !important;
+    }
+
+    /* ---- Top status bar ---- */
+    #statusbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 18px;
+      background: linear-gradient(180deg, rgba(5,7,11,0.85) 0%, rgba(5,7,11,0) 100%);
+      pointer-events: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .brand .dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .brand small {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-dim);
+      letter-spacing: 0.4px;
+    }
+
+    /* ---- Tracking pill ---- */
+    #tracking {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      transition: border-color 0.25s, color 0.25s;
+    }
+
+    #tracking .indicator {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--idle);
+      transition: background 0.25s, box-shadow 0.25s;
+    }
+
+    #tracking.active { border-color: rgba(70, 217, 152, 0.5); }
+    #tracking.active .indicator {
+      background: var(--ok);
+      box-shadow: 0 0 10px var(--ok);
+    }
+
+    /* ---- Info panel (marker found) ---- */
+    #overlay {
+      position: fixed;
+      left: 50%;
+      bottom: 96px;
+      transform: translateX(-50%) translateY(12px);
+      z-index: 15;
+      width: min(340px, calc(100vw - 36px));
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      color: var(--text);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+      overflow: hidden;
+    }
+
+    #overlay.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .panel-head .icon {
+      display: grid;
+      place-items: center;
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 16px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .panel-head p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .panel-body {
+      padding: 14px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .metric .label { color: var(--text-dim); }
+    .metric .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .metric .value.count { color: var(--accent); font-size: 15px; }
+
+    /* ---- Hint (marker lost) ---- */
+    #hint {
+      position: fixed;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(8px);
+      color: var(--text-dim);
+      font-size: 13px;
+      transition: opacity 0.3s;
+    }
+    #hint.hidden { opacity: 0; pointer-events: none; }
+
+    #hint .scan {
+      width: 16px; height: 16px;
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      position: relative;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #hint .scan { animation: none; }
+    }
   </style>
 </head>
 <body>
+  <a-scene
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true"
+    embedded
+    arjs="sourceType: webcam; facingMode: environment; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; debugUIEnabled: false;">
+    <a-marker preset="hiro" id="hiro-marker"></a-marker>
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <!-- Top status bar -->
   <header id="statusbar">
-    <div class="brand">Industrie 4.0<small>AR Mockup · Sonne & Sensoren</small></div>
-    <div id="tracking" role="status"><span class="indicator"></span><span id="tracking-text">Kamera noch aus</span></div>
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        Industrie 4.0
+        <small>AR Mockup · Testansicht</small>
+      </div>
+    </div>
+    <div id="tracking">
+      <span class="indicator"></span>
+      <span class="tracking-text">Suche Marker …</span>
+    </div>
   </header>
 
-  <section id="overlay" hidden aria-label="Simulierte Sensordaten">
-    <div class="panel-head"><span class="demo">DEMO · SIMULIERTE WERTE</span><h2>☀ Hiro-Marker erkannt</h2><p>Virtuelle Umweltstation · keine Sensorverbindung</p></div>
-    <div class="panel-body">
-      <div><span class="label">Temperatur</span><span class="value temperature" id="temperature">–</span><span class="unit"> °C</span></div>
-      <div><span class="label">Luftfeuchtigkeit</span><span class="value" id="humidity">–</span><span class="unit"> %</span></div>
-      <div><span class="label">Helligkeit</span><span class="value" id="brightness">–</span><span class="unit"> lx</span></div>
-      <div><span class="label">Erkennungen gesamt</span><span class="value" id="marker-count">0</span></div>
+  <!-- Info panel shown when marker is found -->
+  <div id="overlay">
+    <div class="panel-head">
+      <div class="icon">▣</div>
+      <div>
+        <h2>Marker erkannt</h2>
+        <p>Hiro-Preset · aktiv</p>
+      </div>
     </div>
-    <div class="panel-foot">Demo-Aktualisierung: <span id="updated">–</span><br>Die Werte sind berechnet, nicht gemessen.</div>
-  </section>
-  <div id="hint" hidden>Hiro-Marker vollständig in die Kamera halten.</div>
-
-  <div id="start-screen">
-    <div class="start-card">
-      <span class="demo">MARKER-AR / HIRO</span>
-      <h1>Eine Sonne für deinen Marker.</h1>
-      <p>Halte den Hiro-Marker in die Kamera. Ein goldener Sonnenring mit rotierenden Strahlen erscheint um das Symbol. Dazu werden simulierte Sensordaten eingeblendet.</p>
-      <p>Öffne diese Seite über <strong>HTTPS</strong> oder auf dem gleichen Rechner über <strong>localhost</strong>. Erlaube anschließend den Kamerazugriff. Internet wird für die AR-Bibliotheken benötigt.</p>
-      <button id="start" type="button">Kamera starten</button>
-      <p id="error" role="alert" hidden></p>
+    <div class="panel-body">
+      <div class="metric">
+        <span class="label">Status</span>
+        <span class="value">Verbunden</span>
+      </div>
+      <div class="metric">
+        <span class="label">Erkannt (gesamt)</span>
+        <span class="value count" id="marker-count">0</span>
+      </div>
     </div>
   </div>
 
+  <!-- Hint shown when no marker -->
+  <div id="hint">
+    <span class="scan"></span>
+    Hiro-Marker in den Kamerabereich halten
+  </div>
+
   <script>
-    'use strict';
-    const $ = id => document.getElementById(id);
-    let markerActive = false;
+    const overlay = document.getElementById('overlay');
+    const hint = document.getElementById('hint');
+    const tracking = document.getElementById('tracking');
+    const trackingText = document.querySelector('.tracking-text');
+    const hiroMarker = document.getElementById('hiro-marker');
+    const markerCount = document.getElementById('marker-count');
     let markerFoundCount = 0;
-    let sensorTimer = null;
-    let scene = null;
-    let cameraFailed = false;
 
-    // Marker-Koordinaten: X/Z bilden die Papierfläche, Y zeigt vom Papier weg.
-    // Der Innenradius bleibt größer als die halbe Markerdiagonale (ca. 0,71).
-    // So bleibt die quadratische Mitte frei. Keine Bilddatei/3D-Datei nötig.
-    if (window.AFRAME) {
-      AFRAME.registerComponent('marker-sun', {
-        init: function () {
-          const THREE = AFRAME.THREE;
-          this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-          this.group = new THREE.Group();
-          this.group.position.y = 0.035;
-          this.geometries = [];
-          this.materials = [];
-          const gold = new THREE.MeshBasicMaterial({color: '#ffd34d'});
-          const orange = new THREE.MeshBasicMaterial({color: '#ff9b32'});
-          this.materials.push(gold, orange);
-          const ringGeometry = new THREE.TorusGeometry(0.88, 0.065, 12, 72);
-          this.geometries.push(ringGeometry);
-          const ring = new THREE.Mesh(ringGeometry, gold);
-          ring.rotation.x = -Math.PI / 2;
-          this.group.add(ring);
-          this.rays = new THREE.Group();
-          this.group.add(this.rays);
-          const rayGeometry = new THREE.ConeGeometry(0.085, 0.34, 4);
-          this.geometries.push(rayGeometry);
-          for (let i = 0; i < 16; i++) {
-            const angle = i / 16 * Math.PI * 2;
-            const direction = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
-            const ray = new THREE.Mesh(rayGeometry, i % 2 ? orange : gold);
-            ray.position.copy(direction).multiplyScalar(1.19);
-            ray.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
-            this.rays.add(ray);
-          }
-          this.el.setObject3D('sun', this.group);
-        },
-        tick: function (time, delta) {
-          if (!markerActive || this.reducedMotion.matches) return;
-          this.rays.rotation.y += Math.min(delta, 100) * 0.00022;
-        },
-        remove: function () {
-          this.el.removeObject3D('sun');
-          this.geometries.forEach(geometry => geometry.dispose());
-          this.materials.forEach(material => material.dispose());
-        }
-      });
-    }
-
-    // Nur Demo-Daten! Für echte Messwerte diese Funktion durch eine Abfrage
-    // einer Sensor-API ersetzen und Quelle, Einheiten und Fehlerstatus anpassen.
-    function updateDemoSensors() {
-      if (!markerActive || document.hidden) return;
-      const t = performance.now() / 1000;
-      const temperature = 24 + 1.8 * Math.sin(t / 12);
-      const humidity = 47 + 4 * Math.sin(t / 17 + 1);
-      const brightness = 720 + 110 * Math.sin(t / 9);
-      $('temperature').textContent = temperature.toLocaleString('de-DE', {minimumFractionDigits:1, maximumFractionDigits:1});
-      $('humidity').textContent = Math.round(humidity).toLocaleString('de-DE');
-      $('brightness').textContent = Math.round(brightness).toLocaleString('de-DE');
-      $('updated').textContent = new Date().toLocaleTimeString('de-DE');
-    }
-
-    function setTracking(found) {
-      if (cameraFailed || markerActive === found) return;
-      markerActive = found;
-      $('overlay').hidden = !found;
-      $('hint').hidden = found;
-      $('tracking').classList.toggle('active', found);
-      $('tracking-text').textContent = found ? 'Marker aktiv' : 'Suche Marker …';
-      clearInterval(sensorTimer);
-      sensorTimer = null;
-      if (found) {
-        $('marker-count').textContent = ++markerFoundCount;
-        updateDemoSensors();
-        sensorTimer = setInterval(updateDemoSensors, 1000);
-      }
-    }
-
-    function showError(message) {
-      $('error').textContent = message;
-      $('error').hidden = false;
-      $('start-screen').hidden = false;
-    }
-
-    // Ereignisse werden vor dem Erstellen der Szene registriert.
-    window.addEventListener('camera-init', () => {
-      if (!cameraFailed) $('tracking-text').textContent = 'Suche Marker …';
-    });
-    window.addEventListener('camera-error', () => {
-      setTracking(false);
-      cameraFailed = true;
-      $('hint').hidden = true;
-      $('tracking-text').textContent = 'Kamerafehler';
-      showError('Kamera nicht verfügbar. Prüfe die Kamera-Freigabe, schließe andere Kamera-Programme und lade die Seite neu. Verwende HTTPS oder localhost.');
-      $('start').textContent = 'Seite neu laden';
-      $('start').disabled = false;
-      $('start').onclick = () => location.reload();
+    hiroMarker.addEventListener('markerFound', () => {
+      console.debug('Marker found');
+      markerFoundCount += 1;
+      markerCount.textContent = markerFoundCount;
+      overlay.classList.add('visible');
+      hint.classList.add('hidden');
+      tracking.classList.add('active');
+      trackingText.textContent = 'Marker aktiv';
     });
 
-    $('start').onclick = () => {
-      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-        showError('Kein Kamerazugriff möglich. Öffne die Datei über einen HTTPS-Webserver oder auf diesem Rechner über http://localhost.');
-        return;
-      }
-      if (!window.AFRAME || !AFRAME.systems.arjs) {
-        showError('Die AR-Bibliotheken konnten nicht geladen werden. Prüfe Internetverbindung oder Netzwerksperren und lade die Seite neu.');
-        return;
-      }
-      if (scene) return;
-      $('start').disabled = true;
-      $('start-screen').hidden = true;
-      $('hint').hidden = false;
-      $('tracking-text').textContent = 'Kamera startet …';
-
-      // Wie im Ausgangscode: Hiro-Preset. Das angehängte Bild muss nicht
-      // separat als Pattern-Datei eingebunden werden.
-      scene = document.createElement('a-scene');
-      scene.setAttribute('embedded', '');
-      scene.setAttribute('vr-mode-ui', 'enabled: false');
-      scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
-      scene.setAttribute('renderer', 'alpha: true; antialias: true; logarithmicDepthBuffer: true');
-      scene.setAttribute('arjs', 'sourceType: webcam; sourceWidth: 1280; sourceHeight: 720; debugUIEnabled: false;');
-
-      const marker = document.createElement('a-marker');
-      marker.id = 'hiro-marker';
-      marker.setAttribute('preset', 'hiro');
-      marker.setAttribute('emitevents', 'true');
-      const sun = document.createElement('a-entity');
-      sun.setAttribute('marker-sun', '');
-      marker.appendChild(sun);
-      marker.addEventListener('markerFound', () => setTracking(true));
-      marker.addEventListener('markerLost', () => setTracking(false));
-      scene.appendChild(marker);
-      const camera = document.createElement('a-entity');
-      camera.setAttribute('camera', '');
-      scene.appendChild(camera);
-      document.body.appendChild(scene);
-    };
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && markerActive) updateDemoSensors();
+    hiroMarker.addEventListener('markerLost', () => {
+      console.debug('Marker lost');
+      overlay.classList.remove('visible');
+      hint.classList.remove('hidden');
+      tracking.classList.remove('active');
+      trackingText.textContent = 'Suche Marker …';
     });
+
+    /* global functions for debugging */
+    window.fireEventMarkerFound = () => {
+      hiroMarker.dispatchEvent(new CustomEvent('markerFound'));
+    }
+    window.fireEventMarkerLost = () => {
+      hiroMarker.dispatchEvent(new CustomEvent('markerLost'));
+    }
   </script>
 </body>
 </html>
