@@ -1,2276 +1,2492 @@
+```html
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1,
+               maximum-scale=1, user-scalable=no">
 
-  <title>Industrie 4.0 · AR Control Center</title>
+<title>INDUSTRIE 4.0 · AR CONTROL CENTER</title>
 
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
 
-  <!-- AR.js -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+<style>
 
-  <style>
-    :root {
-      color-scheme: dark;
+/* ============================================================
+   RESET
+   ============================================================ */
 
-      --bg: #05080d;
-      --panel: rgba(8, 14, 23, 0.86);
-      --panel-strong: rgba(10, 18, 29, 0.96);
+* {
+    box-sizing: border-box;
+}
 
-      --border: rgba(100, 200, 255, 0.25);
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 
-      --accent: #35c8ff;
-      --accent-2: #7c5cff;
+    background: #02060b;
 
-      --ok: #46e0a0;
-      --warning: #ffc857;
-      --danger: #ff5c7a;
-
-      --text: #edf7ff;
-      --muted: #8095aa;
-
-      --shadow:
-        0 12px 40px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255,255,255,0.05);
-
-      --font:
-        Inter,
+    font-family:
         "Segoe UI",
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
+        Arial,
         sans-serif;
-    }
 
-    * {
-      box-sizing: border-box;
-    }
+    color: #eaf8ff;
+}
 
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: var(--bg);
-      font-family: var(--font);
-      color: var(--text);
-    }
+body {
+    position: relative;
+}
 
-    body {
-      position: relative;
-    }
+/* ============================================================
+   AR CAMERA
+   ============================================================ */
 
-    /* =========================================================
-       AR CAMERA
-       ========================================================= */
+a-scene {
+    position: fixed !important;
+    inset: 0 !important;
 
-    video,
-    canvas {
-      position: fixed !important;
-      inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
 
-      width: 100vw !important;
-      height: 100vh !important;
+    z-index: 1 !important;
+}
 
-      object-fit: cover !important;
-    }
+video {
+    position: fixed !important;
 
-    video {
-      z-index: 0 !important;
-    }
+    inset: 0 !important;
 
-    canvas {
-      z-index: 1 !important;
-    }
+    width: 100vw !important;
+    height: 100vh !important;
 
-    a-scene {
-      position: fixed !important;
-      inset: 0 !important;
+    object-fit: cover !important;
 
-      width: 100vw !important;
-      height: 100vh !important;
+    z-index: 0 !important;
+}
 
-      z-index: 0;
-    }
+canvas {
+    position: fixed !important;
 
-    /* =========================================================
-       GLOBAL HUD
-       ========================================================= */
+    inset: 0 !important;
 
-    #hud {
-      position: fixed;
-      inset: 0;
-      z-index: 20;
+    width: 100vw !important;
+    height: 100vh !important;
 
-      pointer-events: none;
-    }
+    z-index: 1 !important;
+}
 
-    /* =========================================================
-       TOP BAR
-       ========================================================= */
+/* ============================================================
+   MAIN HUD
+   ============================================================ */
 
-    #topbar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+#hud {
 
-      padding:
-        max(14px, env(safe-area-inset-top))
-        18px
-        16px;
+    position: fixed;
 
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+    inset: 0;
 
-      background:
+    z-index: 50;
+
+    pointer-events: none;
+
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   TECH GRID
+   ============================================================ */
+
+#grid {
+
+    position: absolute;
+
+    inset: 0;
+
+    opacity: .13;
+
+    background-image:
         linear-gradient(
-          180deg,
-          rgba(3,7,12,.94),
-          rgba(3,7,12,.55),
-          transparent
+            rgba(40,190,255,.35) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(40,190,255,.35) 1px,
+            transparent 1px
         );
+
+    background-size:
+        45px 45px;
+
+    mask-image:
+        linear-gradient(
+            to bottom,
+            transparent,
+            black 25%,
+            black 75%,
+            transparent
+        );
+
+    animation:
+        gridMove 12s linear infinite;
+}
+
+@keyframes gridMove {
+
+    from {
+        transform:
+            translateY(0);
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
+    to {
+        transform:
+            translateY(45px);
+    }
+}
+
+
+/* ============================================================
+   VIGNETTE
+   ============================================================ */
+
+#vignette {
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 35%,
+            rgba(0,5,12,.25) 70%,
+            rgba(0,5,12,.75) 100%
+        );
+}
+
+
+/* ============================================================
+   TOP HEADER
+   ============================================================ */
+
+#header {
+
+    position: absolute;
+
+    left: 22px;
+    right: 22px;
+    top: 18px;
+
+    height: 62px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 0 18px;
+
+    border:
+        1px solid rgba(70,205,255,.32);
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(2,12,21,.88),
+            rgba(3,17,29,.58),
+            rgba(2,12,21,.88)
+        );
+
+    backdrop-filter:
+        blur(14px);
+
+    clip-path:
+        polygon(
+            0 0,
+            calc(100% - 18px) 0,
+            100% 18px,
+            100% 100%,
+            18px 100%,
+            0 calc(100% - 18px)
+        );
+}
+
+
+/* ============================================================
+   LOGO
+   ============================================================ */
+
+.logo {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+.logo-mark {
+
+    width: 32px;
+    height: 32px;
+
+    display: grid;
+
+    place-items: center;
+
+    border:
+        1px solid #36d7ff;
+
+    color: #36d7ff;
+
+    font-size: 17px;
+
+    box-shadow:
+        inset 0 0 15px rgba(54,215,255,.15),
+        0 0 15px rgba(54,215,255,.25);
+}
+
+.logo-title {
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
+}
+
+.logo-sub {
+
+    margin-top: 2px;
+
+    color: #64859b;
+
+    font-size: 8px;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   HEADER STATUS
+   ============================================================ */
+
+.header-status {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+}
+
+.header-stat {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-end;
+}
+
+.header-stat span {
+
+    color: #58788d;
+
+    font-size: 8px;
+
+    letter-spacing: 1.5px;
+}
+
+.header-stat strong {
+
+    margin-top: 2px;
+
+    color: #44e7a5;
+
+    font-size: 11px;
+
+    letter-spacing: 1px;
+}
+
+
+/* ============================================================
+   CORNER TARGETING FRAME
+   ============================================================ */
+
+#target-frame {
+
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: min(420px, 75vw);
+    height: min(330px, 58vw);
+
+    transform:
+        translate(-50%, -50%);
+
+    transition:
+        width .5s ease,
+        height .5s ease;
+}
+
+.corner {
+
+    position: absolute;
+
+    width: 42px;
+    height: 42px;
+
+    border-color: #35d7ff;
+
+    filter:
+        drop-shadow(
+            0 0 7px #35d7ff
+        );
+}
+
+.corner.tl {
+    left: 0;
+    top: 0;
+
+    border-top: 2px solid;
+    border-left: 2px solid;
+}
+
+.corner.tr {
+    right: 0;
+    top: 0;
+
+    border-top: 2px solid;
+    border-right: 2px solid;
+}
+
+.corner.bl {
+    left: 0;
+    bottom: 0;
+
+    border-bottom: 2px solid;
+    border-left: 2px solid;
+}
+
+.corner.br {
+    right: 0;
+    bottom: 0;
+
+    border-bottom: 2px solid;
+    border-right: 2px solid;
+}
+
+
+/* ============================================================
+   SCAN LINE
+   ============================================================ */
+
+#scan-line {
+
+    position: absolute;
+
+    left: 4%;
+    right: 4%;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #37dcff,
+            transparent
+        );
+
+    box-shadow:
+        0 0 12px #37dcff,
+        0 0 30px rgba(55,220,255,.8);
+
+    animation:
+        scan 2.4s linear infinite;
+}
+
+@keyframes scan {
+
+    0% {
+        top: 4%;
+        opacity: 0;
     }
 
-    .brand-dot {
-      width: 10px;
-      height: 10px;
-
-      border-radius: 50%;
-
-      background: var(--accent);
-
-      box-shadow:
-        0 0 8px var(--accent),
-        0 0 20px rgba(53,200,255,.7);
-
-      animation: brandPulse 2s infinite;
-    }
-
-    @keyframes brandPulse {
-      0%,100% {
-        opacity: .65;
-      }
-
-      50% {
+    10% {
         opacity: 1;
-      }
     }
 
-    .brand-title {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: .3px;
+    90% {
+        opacity: 1;
     }
 
-    .brand-subtitle {
-      margin-top: 2px;
+    100% {
+        top: 96%;
+        opacity: 0;
+    }
+}
 
-      font-size: 10px;
-      color: var(--muted);
 
-      letter-spacing: .6px;
-      text-transform: uppercase;
+/* ============================================================
+   TARGET CENTER
+   ============================================================ */
+
+#target-center {
+
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 28px;
+    height: 28px;
+
+    transform:
+        translate(-50%, -50%);
+
+    border:
+        1px solid rgba(55,220,255,.8);
+
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 18px rgba(55,220,255,.4);
+
+    animation:
+        targetPulse 2s infinite;
+}
+
+#target-center::before,
+#target-center::after {
+
+    content: "";
+
+    position: absolute;
+
+    background: #37dcff;
+}
+
+#target-center::before {
+
+    left: 50%;
+    top: -10px;
+
+    width: 1px;
+    height: 48px;
+}
+
+#target-center::after {
+
+    top: 50%;
+    left: -10px;
+
+    width: 48px;
+    height: 1px;
+}
+
+@keyframes targetPulse {
+
+    0%,
+    100% {
+        transform:
+            translate(-50%, -50%)
+            scale(.8);
+
+        opacity: .45;
     }
 
-    /* =========================================================
-       TRACKING STATUS
-       ========================================================= */
+    50% {
+        transform:
+            translate(-50%, -50%)
+            scale(1.2);
 
-    #tracking {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      padding: 8px 12px;
-
-      border:
-        1px solid rgba(255,255,255,.12);
-
-      border-radius: 999px;
-
-      background: rgba(5,10,17,.7);
-
-      backdrop-filter: blur(12px);
-
-      font-size: 11px;
-      font-weight: 600;
-
-      transition: .3s ease;
+        opacity: 1;
     }
+}
 
-    #tracking-indicator {
-      width: 8px;
-      height: 8px;
 
-      border-radius: 50%;
+/* ============================================================
+   LEFT DATA PANEL
+   ============================================================ */
 
-      background: var(--warning);
-      box-shadow: 0 0 8px var(--warning);
-    }
+#left-panel {
 
-    #tracking.active {
-      border-color: rgba(70,224,160,.4);
-    }
+    position: absolute;
 
-    #tracking.active #tracking-indicator {
-      background: var(--ok);
-      box-shadow: 0 0 12px var(--ok);
-    }
+    left: 22px;
 
-    /* =========================================================
-       CROSSHAIR
-       ========================================================= */
+    top: 115px;
 
-    #crosshair {
-      position: absolute;
+    width: 205px;
 
-      left: 50%;
-      top: 50%;
+    padding: 14px;
 
-      width: 70px;
-      height: 70px;
+    border-left:
+        2px solid #36d7ff;
 
-      transform: translate(-50%, -50%);
-
-      opacity: .45;
-
-      transition: .3s ease;
-    }
-
-    #crosshair::before,
-    #crosshair::after {
-      content: "";
-
-      position: absolute;
-      inset: 50%;
-
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-    }
-
-    #crosshair::before {
-      width: 2px;
-      height: 100%;
-      transform: translate(-50%, -50%);
-    }
-
-    #crosshair::after {
-      width: 100%;
-      height: 2px;
-      transform: translate(-50%, -50%);
-    }
-
-    .cross-corner {
-      position: absolute;
-
-      width: 15px;
-      height: 15px;
-
-      border-color: var(--accent);
-      border-style: solid;
-    }
-
-    .c1 {
-      left: 0;
-      top: 0;
-      border-width: 2px 0 0 2px;
-    }
-
-    .c2 {
-      right: 0;
-      top: 0;
-      border-width: 2px 2px 0 0;
-    }
-
-    .c3 {
-      left: 0;
-      bottom: 0;
-      border-width: 0 0 2px 2px;
-    }
-
-    .c4 {
-      right: 0;
-      bottom: 0;
-      border-width: 0 2px 2px 0;
-    }
-
-    /* =========================================================
-       SCANNER
-       ========================================================= */
-
-    #scanner {
-      position: absolute;
-
-      left: 50%;
-      top: 50%;
-
-      width: min(330px, 70vw);
-      height: min(230px, 48vw);
-
-      transform: translate(-50%, -50%);
-
-      border:
-        1px solid rgba(53,200,255,.28);
-
-      border-radius: 14px;
-
-      opacity: .8;
-
-      pointer-events: none;
-    }
-
-    #scanner::after {
-      content: "";
-
-      position: absolute;
-
-      left: 0;
-      right: 0;
-
-      height: 1px;
-
-      background:
+    background:
         linear-gradient(
-          90deg,
-          transparent,
-          var(--accent),
-          transparent
+            90deg,
+            rgba(2,13,23,.9),
+            rgba(2,13,23,.48)
         );
 
-      box-shadow:
-        0 0 12px var(--accent);
+    backdrop-filter:
+        blur(12px);
 
-      animation: scanLine 2.2s linear infinite;
+    transform:
+        translateX(-230px);
+
+    opacity: 0;
+
+    transition:
+        .5s ease;
+}
+
+#left-panel.visible {
+
+    transform:
+        translateX(0);
+
+    opacity: 1;
+}
+
+.panel-label {
+
+    color: #4b7187;
+
+    font-size: 8px;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+}
+
+.machine-name {
+
+    margin-top: 5px;
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.machine-id {
+
+    margin-top: 3px;
+
+    color: #36d7ff;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+
+/* ============================================================
+   DATA ROWS
+   ============================================================ */
+
+.data-row {
+
+    margin-top: 15px;
+}
+
+.data-row-head {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    margin-bottom: 5px;
+
+    font-size: 9px;
+}
+
+.data-row-head span {
+
+    color: #7190a3;
+}
+
+.data-row-head strong {
+
+    color: #e8f9ff;
+}
+
+.bar {
+
+    height: 3px;
+
+    overflow: hidden;
+
+    background:
+        rgba(255,255,255,.08);
+}
+
+.bar i {
+
+    display: block;
+
+    height: 100%;
+
+    width: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            #167dff,
+            #36d7ff
+        );
+
+    box-shadow:
+        0 0 9px #36d7ff;
+
+    transition:
+        width .8s ease;
+}
+
+
+/* ============================================================
+   RIGHT PANEL
+   ============================================================ */
+
+#right-panel {
+
+    position: absolute;
+
+    right: 22px;
+
+    top: 115px;
+
+    width: 205px;
+
+    padding: 14px;
+
+    border-right:
+        2px solid #7b5cff;
+
+    background:
+        linear-gradient(
+            270deg,
+            rgba(9,7,25,.9),
+            rgba(9,7,25,.48)
+        );
+
+    backdrop-filter:
+        blur(12px);
+
+    transform:
+        translateX(230px);
+
+    opacity: 0;
+
+    transition:
+        .5s ease;
+}
+
+#right-panel.visible {
+
+    transform:
+        translateX(0);
+
+    opacity: 1;
+}
+
+.status-big {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 7px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+.status-dot {
+
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #44e7a5;
+
+    box-shadow:
+        0 0 12px #44e7a5;
+
+    animation:
+        statusBlink 1.3s infinite;
+}
+
+@keyframes statusBlink {
+
+    0%,
+    100% {
+        opacity: .5;
     }
 
-    @keyframes scanLine {
-      from {
-        top: 0;
-      }
-
-      to {
-        top: 100%;
-      }
+    50% {
+        opacity: 1;
     }
+}
 
-    #scanner.marker-active {
-      opacity: 0;
-    }
+.status-message {
 
-    /* =========================================================
-       CENTER MESSAGE
-       ========================================================= */
+    margin-top: 14px;
 
-    #scan-message {
-      position: absolute;
+    padding: 9px;
 
-      left: 50%;
-      bottom: 82px;
+    border:
+        1px solid rgba(68,231,165,.18);
 
-      transform: translateX(-50%);
+    background:
+        rgba(68,231,165,.05);
 
-      width: max-content;
-      max-width: calc(100vw - 30px);
+    color: #8dc5ad;
 
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    font-size: 9px;
 
-      padding: 10px 16px;
+    line-height: 1.5;
+}
 
-      border:
-        1px solid var(--border);
 
-      border-radius: 999px;
+/* ============================================================
+   BOTTOM CENTER INFO
+   ============================================================ */
 
-      background: rgba(5,10,17,.78);
+#bottom-info {
 
-      backdrop-filter: blur(12px);
+    position: absolute;
 
-      color: var(--muted);
+    left: 50%;
 
-      font-size: 12px;
+    bottom: 88px;
 
-      transition: .3s ease;
-    }
+    transform:
+        translateX(-50%)
+        translateY(30px);
 
-    #scan-message.hidden {
-      opacity: 0;
-      transform:
+    width: min(500px, calc(100vw - 40px));
+
+    text-align: center;
+
+    opacity: 0;
+
+    transition:
+        .5s ease;
+}
+
+#bottom-info.visible {
+
+    transform:
+        translateX(-50%)
+        translateY(0);
+
+    opacity: 1;
+}
+
+.bottom-title {
+
+    font-size: 19px;
+
+    font-weight: 800;
+
+    letter-spacing: 4px;
+
+    text-shadow:
+        0 0 15px rgba(54,215,255,.45);
+}
+
+.bottom-sub {
+
+    margin-top: 5px;
+
+    color: #7090a4;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+
+/* ============================================================
+   BOTTOM NAVIGATION
+   ============================================================ */
+
+#navigation {
+
+    position: absolute;
+
+    left: 50%;
+    bottom: 18px;
+
+    transform:
+        translateX(-50%);
+
+    display: flex;
+
+    gap: 5px;
+
+    padding: 5px;
+
+    border:
+        1px solid rgba(60,205,255,.2);
+
+    background:
+        rgba(2,10,18,.88);
+
+    backdrop-filter:
+        blur(14px);
+
+    pointer-events:
+        auto;
+}
+
+.nav-button {
+
+    min-width: 75px;
+
+    padding:
+        9px 12px;
+
+    border:
+        1px solid transparent;
+
+    background:
+        rgba(255,255,255,.035);
+
+    color: #7793a5;
+
+    cursor: pointer;
+
+    font:
+        inherit;
+
+    font-size: 8px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+
+    transition:
+        .2s ease;
+}
+
+.nav-button:hover,
+.nav-button.active {
+
+    border-color:
+        rgba(54,215,255,.5);
+
+    color: #dff9ff;
+
+    background:
+        rgba(54,215,255,.08);
+
+    box-shadow:
+        inset 0 0 12px rgba(54,215,255,.06);
+}
+
+
+/* ============================================================
+   SCAN MESSAGE
+   ============================================================ */
+
+#scan-message {
+
+    position: absolute;
+
+    left: 50%;
+
+    top: calc(50% + 195px);
+
+    transform:
+        translateX(-50%);
+
+    padding:
+        9px 16px;
+
+    border:
+        1px solid rgba(55,220,255,.25);
+
+    background:
+        rgba(2,12,20,.78);
+
+    backdrop-filter:
+        blur(10px);
+
+    color: #7b9aac;
+
+    font-size: 9px;
+
+    letter-spacing: 1.5px;
+
+    text-transform: uppercase;
+
+    white-space: nowrap;
+
+    transition:
+        .3s ease;
+}
+
+#scan-message.hidden {
+
+    opacity: 0;
+
+    transform:
         translateX(-50%)
         translateY(10px);
-    }
+}
 
-    .scan-icon {
-      width: 15px;
-      height: 15px;
+.scan-symbol {
 
-      border:
-        2px solid var(--accent);
+    display: inline-block;
 
-      border-radius: 4px;
+    width: 7px;
+    height: 7px;
 
-      animation: scanIcon 1.5s infinite;
-    }
+    margin-right: 8px;
 
-    @keyframes scanIcon {
-      0%,100% {
-        transform: scale(.8);
-        opacity: .4;
-      }
+    border:
+        1px solid #36d7ff;
 
-      50% {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
+    box-shadow:
+        0 0 7px #36d7ff;
 
-    /* =========================================================
-       RIGHT SIDE KPI PANEL
-       ========================================================= */
+    animation:
+        targetPulse 1.4s infinite;
+}
 
-    #dashboard {
-      position: absolute;
 
-      right: 18px;
-      top: 105px;
+/* ============================================================
+   BOTTOM LEFT TELEMETRY
+   ============================================================ */
 
-      width: 205px;
+#telemetry {
 
-      padding: 14px;
+    position: absolute;
 
-      background: var(--panel);
+    left: 22px;
 
-      border:
-        1px solid var(--border);
+    bottom: 20px;
 
-      border-radius: 14px;
+    display: flex;
 
-      box-shadow: var(--shadow);
+    gap: 7px;
+}
 
-      backdrop-filter: blur(14px);
+.telemetry-item {
 
-      transform: translateX(230px);
+    padding:
+        6px 9px;
 
-      opacity: 0;
-
-      transition:
-        transform .4s ease,
-        opacity .4s ease;
-    }
-
-    #dashboard.visible {
-      transform: translateX(0);
-      opacity: 1;
-    }
-
-    .dashboard-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      margin-bottom: 13px;
-
-      padding-bottom: 10px;
-
-      border-bottom:
-        1px solid rgba(255,255,255,.07);
-    }
-
-    .dashboard-title {
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .live {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-
-      color: var(--ok);
-
-      font-size: 9px;
-      font-weight: 700;
-
-      text-transform: uppercase;
-    }
-
-    .live::before {
-      content: "";
-
-      width: 6px;
-      height: 6px;
-
-      border-radius: 50%;
-
-      background: var(--ok);
-
-      box-shadow: 0 0 7px var(--ok);
-    }
-
-    .kpi {
-      margin-bottom: 12px;
-    }
-
-    .kpi-top {
-      display: flex;
-      justify-content: space-between;
-
-      margin-bottom: 5px;
-    }
-
-    .kpi-name {
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .kpi-value {
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .progress {
-      height: 4px;
-
-      overflow: hidden;
-
-      border-radius: 99px;
-
-      background: rgba(255,255,255,.08);
-    }
-
-    .progress-bar {
-      height: 100%;
-
-      width: 0;
-
-      border-radius: inherit;
-
-      background: var(--accent);
-
-      box-shadow: 0 0 8px var(--accent);
-
-      transition: width .8s ease;
-    }
-
-    .kpi:nth-child(3) .progress-bar {
-      background: var(--ok);
-      box-shadow: 0 0 8px var(--ok);
-    }
-
-    .kpi:nth-child(4) .progress-bar {
-      background: var(--warning);
-      box-shadow: 0 0 8px var(--warning);
-    }
-
-    /* =========================================================
-       BOTTOM CONTROL BAR
-       ========================================================= */
-
-    #controls {
-      position: absolute;
-
-      left: 50%;
-      bottom: max(16px, env(safe-area-inset-bottom));
-
-      transform:
-        translateX(-50%)
-        translateY(100px);
-
-      display: flex;
-      gap: 8px;
-
-      padding: 8px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 15px;
-
-      background: rgba(5,10,17,.84);
-
-      backdrop-filter: blur(14px);
-
-      opacity: 0;
-
-      transition:
-        transform .4s ease,
-        opacity .4s ease;
-    }
-
-    #controls.visible {
-      transform: translateX(-50%);
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .control-btn {
-      min-width: 72px;
-
-      padding: 9px 10px;
-
-      border:
+    border:
         1px solid rgba(255,255,255,.08);
 
-      border-radius: 9px;
+    background:
+        rgba(2,10,17,.65);
 
-      background:
-        rgba(255,255,255,.04);
+    color: #587587;
 
-      color: var(--text);
+    font-size: 8px;
+}
 
-      font: inherit;
-      font-size: 10px;
-      font-weight: 600;
+.telemetry-item strong {
 
-      cursor: pointer;
+    color: #b8d8e8;
 
-      transition: .2s ease;
-    }
+    margin-left: 4px;
+}
 
-    .control-btn:hover {
-      border-color: var(--accent);
-      background: rgba(53,200,255,.1);
-    }
 
-    .control-btn:active {
-      transform: scale(.95);
-    }
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 
-    .control-icon {
-      display: block;
+@media (max-width: 700px) {
 
-      margin-bottom: 3px;
-
-      font-size: 16px;
-    }
-
-    /* =========================================================
-       EVENT LOG
-       ========================================================= */
-
-    #event-log {
-      position: absolute;
-
-      left: 18px;
-      top: 105px;
-
-      width: 190px;
-
-      opacity: 0;
-
-      transform: translateX(-210px);
-
-      transition: .4s ease;
-    }
-
-    #event-log.visible {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .log-title {
-      margin-bottom: 8px;
-
-      font-size: 9px;
-      font-weight: 700;
-
-      color: var(--muted);
-
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .log-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 7px;
-
-      margin-bottom: 7px;
-
-      padding: 7px 8px;
-
-      border-left:
-        2px solid var(--accent);
-
-      border-radius: 5px;
-
-      background:
-        rgba(5,10,17,.65);
-
-      backdrop-filter: blur(8px);
-
-      font-size: 9px;
-      color: #aab9c8;
-    }
-
-    .log-item.success {
-      border-color: var(--ok);
-    }
-
-    .log-item.warning {
-      border-color: var(--warning);
-    }
-
-    .log-time {
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    /* =========================================================
-       SYSTEM INFO
-       ========================================================= */
-
-    #system-info {
-      position: absolute;
-
-      left: 18px;
-      bottom: max(16px, env(safe-area-inset-bottom));
-
-      display: flex;
-      gap: 10px;
-
-      opacity: .7;
-
-      font-size: 9px;
-      color: var(--muted);
-    }
-
-    .system-item {
-      padding: 5px 8px;
-
-      border:
-        1px solid rgba(255,255,255,.08);
-
-      border-radius: 6px;
-
-      background: rgba(5,10,17,.55);
-
-      backdrop-filter: blur(8px);
-    }
-
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
-
-    @media (max-width: 700px) {
-
-      #dashboard {
-        top: 85px;
-        right: 10px;
-
-        width: 165px;
-
-        padding: 11px;
-      }
-
-      #event-log {
+    #header {
         left: 10px;
-        top: 85px;
+        right: 10px;
+        top: 10px;
+    }
+
+    .header-stat:nth-child(2) {
+        display: none;
+    }
+
+    #left-panel {
+
+        left: 10px;
+        top: 90px;
 
         width: 150px;
-      }
+    }
 
-      #event-log .log-item:nth-child(n+3) {
+    #right-panel {
+
+        right: 10px;
+        top: 90px;
+
+        width: 150px;
+    }
+
+    .machine-name {
+        font-size: 13px;
+    }
+
+    #target-frame {
+
+        width: 72vw;
+        height: 50vw;
+    }
+
+    #scan-message {
+
+        top: calc(50% + 145px);
+
+        font-size: 8px;
+    }
+
+    #telemetry {
         display: none;
-      }
+    }
 
-      #controls {
-        bottom: max(10px, env(safe-area-inset-bottom));
+    #navigation {
 
-        width: calc(100vw - 20px);
+        width:
+            calc(100vw - 20px);
 
-        justify-content: center;
-      }
+        bottom: 10px;
+    }
 
-      .control-btn {
-        flex: 1;
+    .nav-button {
+
         min-width: 0;
-      }
 
-      #system-info {
-        display: none;
-      }
+        flex: 1;
 
-      #scan-message {
-        bottom: 90px;
-      }
+        padding:
+            9px 4px;
     }
 
-    @media (max-width: 430px) {
-
-      #event-log {
-        display: none;
-      }
-
-      #dashboard {
-        width: 155px;
-      }
-
-      #tracking {
-        padding: 7px 9px;
-      }
-
-      .brand-subtitle {
-        display: none;
-      }
+    #bottom-info {
+        bottom: 68px;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: .001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .001ms !important;
-      }
+    .bottom-title {
+        font-size: 14px;
     }
-  </style>
+}
+
+@media (max-width: 430px) {
+
+    #left-panel,
+    #right-panel {
+        display: none;
+    }
+
+    .header-status {
+        display: none;
+    }
+
+    #target-frame {
+        width: 80vw;
+        height: 58vw;
+    }
+}
+
+</style>
 </head>
+
 
 <body>
 
-  <!-- =========================================================
-       AR SCENE
-       ========================================================= -->
 
-  <a-scene
+<!-- ============================================================
+     A-FRAME / AR
+     ============================================================ -->
+
+<a-scene
+
     embedded
+
     vr-mode-ui="enabled: false"
 
     renderer="
-      antialias: true;
-      logarithmicDepthBuffer: true;
-      colorManagement: true;
+        antialias: true;
+        alpha: true;
+        colorManagement: true;
+        logarithmicDepthBuffer: true;
     "
 
     arjs="
-      sourceType: webcam;
-      facingMode: environment;
+        sourceType: webcam;
+        facingMode: environment;
 
-      sourceWidth: 1280;
-      sourceHeight: 720;
+        sourceWidth: 1280;
+        sourceHeight: 720;
 
-      displayWidth: 1280;
-      displayHeight: 720;
+        displayWidth: 1280;
+        displayHeight: 720;
 
-      debugUIEnabled: false;
-    "
-
-    loading-screen="
-      enabled: false;
+        debugUIEnabled: false;
     ">
 
-    <!-- Hiro Marker -->
+
+    <!-- ========================================================
+         HIRO MARKER
+         ======================================================== -->
+
     <a-marker
-      id="hiro-marker"
-      preset="hiro"
-      smooth="true"
-      smoothCount="8"
-      smoothTolerance="0.01"
-      smoothThreshold="5">
 
-      <!-- =====================================================
-           INDUSTRIAL 4.0 MODEL
-           ===================================================== -->
+        id="hiro-marker"
 
-      <a-entity
-        id="factory-model"
-        visible="false"
-        scale="0.65 0.65 0.65">
+        preset="hiro"
 
-        <!-- Ground platform -->
-        <a-box
-          position="0 0.02 0"
-          width="2.5"
-          height="0.08"
-          depth="1.8"
-          color="#101a26"
-          material="
-            metalness: 0.8;
-            roughness: 0.3;
-          ">
-        </a-box>
+        smooth="true"
 
-        <!-- Platform glowing edge -->
-        <a-box
-          position="0 0.07 0"
-          width="2.45"
-          height="0.025"
-          depth="1.75"
-          color="#35c8ff"
-          material="
-            emissive: #35c8ff;
-            emissiveIntensity: 2;
-          ">
-        </a-box>
+        smoothCount="10"
 
-        <!-- Main machine body -->
-        <a-box
-          position="0 0.65 0"
-          width="1.45"
-          height="1.1"
-          depth="0.9"
-          color="#243446"
-          material="
-            metalness: 0.85;
-            roughness: 0.25;
-          ">
-        </a-box>
+        smoothTolerance="0.01"
 
-        <!-- Machine front -->
-        <a-box
-          position="0 0.68 -0.46"
-          width="1.05"
-          height="0.65"
-          depth="0.035"
-          color="#081018"
-          material="
-            metalness: 0.5;
-            roughness: 0.25;
-          ">
-        </a-box>
+        smoothThreshold="5">
 
-        <!-- Machine screen -->
-        <a-plane
-          position="0 0.83 -0.485"
-          width="0.62"
-          height="0.32"
-          material="
-            shader: flat;
-            color: #06141d;
-            opacity: .98;
-          ">
 
-          <!-- Screen glow -->
-          <a-plane
-            position="0 0 0.005"
-            width="0.57"
-            height="0.27"
-            material="
-              shader: flat;
-              color: #063244;
-              opacity: .95;
-            ">
-          </a-plane>
+        <!-- ====================================================
+             MAIN INDUSTRIAL MACHINE
+             ==================================================== -->
 
-        </a-plane>
-
-        <!-- Screen status bars -->
-        <a-box
-          position="-0.19 0.89 -0.51"
-          width="0.27"
-          height="0.025"
-          depth="0.01"
-          color="#46e0a0"
-          material="
-            emissive: #46e0a0;
-            emissiveIntensity: 2;
-          ">
-        </a-box>
-
-        <a-box
-          position="-0.19 0.82 -0.51"
-          width="0.40"
-          height="0.025"
-          depth="0.01"
-          color="#35c8ff"
-          material="
-            emissive: #35c8ff;
-            emissiveIntensity: 2;
-          ">
-        </a-box>
-
-        <a-box
-          position="-0.19 0.75 -0.51"
-          width="0.32"
-          height="0.025"
-          depth="0.01"
-          color="#7c5cff"
-          material="
-            emissive: #7c5cff;
-            emissiveIntensity: 2;
-          ">
-        </a-box>
-
-        <!-- Industrial pipes -->
-        <a-cylinder
-          position="-0.75 0.8 0"
-          radius="0.08"
-          height="1.1"
-          color="#566879"
-          material="
-            metalness: 0.9;
-            roughness: 0.2;
-          ">
-        </a-cylinder>
-
-        <a-cylinder
-          position="0.75 0.8 0"
-          radius="0.08"
-          height="1.1"
-          color="#566879"
-          material="
-            metalness: 0.9;
-            roughness: 0.2;
-          ">
-        </a-cylinder>
-
-        <!-- Warning lights -->
-        <a-sphere
-          id="machine-light"
-          position="0 1.28 0"
-          radius="0.08"
-          color="#46e0a0"
-          material="
-            emissive: #46e0a0;
-            emissiveIntensity: 4;
-          "
-          animation="
-            property: scale;
-            from: 0.85 0.85 0.85;
-            to: 1.15 1.15 1.15;
-            dir: alternate;
-            loop: true;
-            dur: 900;
-          ">
-        </a-sphere>
-
-        <!-- Rotating machine wheel -->
-        <a-torus
-          id="machine-wheel"
-          position="0.0 0.62 0.49"
-          rotation="90 0 0"
-          radius="0.34"
-          radius-tubular="0.07"
-          color="#35c8ff"
-          material="
-            emissive: #35c8ff;
-            emissiveIntensity: 1.7;
-            metalness: .8;
-          "
-          animation="
-            property: rotation;
-            from: 90 0 0;
-            to: 90 360 0;
-            loop: true;
-            dur: 1800;
-            easing: linear;
-          ">
-        </a-torus>
-
-        <!-- Wheel center -->
-        <a-cylinder
-          position="0 0.62 0.53"
-          rotation="90 0 0"
-          radius="0.1"
-          height="0.08"
-          color="#1a2634"
-          material="
-            metalness: .9;
-            roughness: .15;
-          ">
-        </a-cylinder>
-
-        <!-- Holographic vertical pillars -->
-        <a-box
-          position="-1.05 0.7 -0.65"
-          width="0.025"
-          height="1.35"
-          depth="0.025"
-          color="#35c8ff"
-          material="
-            emissive: #35c8ff;
-            emissiveIntensity: 4;
-            opacity: .8;
-          ">
-        </a-box>
-
-        <a-box
-          position="1.05 0.7 -0.65"
-          width="0.025"
-          height="1.35"
-          depth="0.025"
-          color="#35c8ff"
-          material="
-            emissive: #35c8ff;
-            emissiveIntensity: 4;
-            opacity: .8;
-          ">
-        </a-box>
-
-        <!-- Holographic top frame -->
-        <a-box
-          position="0 1.38 -0.65"
-          width="2.1"
-          height="0.025"
-          depth="0.025"
-          color="#35c8ff"
-          material="
-            emissive: #35c8ff;
-            emissiveIntensity: 4;
-            opacity: .8;
-          ">
-        </a-box>
-
-        <!-- Hologram rings -->
-        <a-torus
-          position="0 1.55 0"
-          rotation="90 0 0"
-          radius="0.85"
-          radius-tubular="0.015"
-          color="#35c8ff"
-          material="
-            emissive: #35c8ff;
-            emissiveIntensity: 3;
-            opacity: .45;
-            transparent: true;
-          "
-          animation="
-            property: rotation;
-            from: 90 0 0;
-            to: 90 360 0;
-            loop: true;
-            dur: 5000;
-            easing: linear;
-          ">
-        </a-torus>
-
-        <a-torus
-          position="0 1.55 0"
-          rotation="0 90 0"
-          radius="0.65"
-          radius-tubular="0.012"
-          color="#7c5cff"
-          material="
-            emissive: #7c5cff;
-            emissiveIntensity: 3;
-            opacity: .35;
-            transparent: true;
-          "
-          animation="
-            property: rotation;
-            from: 0 90 0;
-            to: 360 90 0;
-            loop: true;
-            dur: 7000;
-            easing: linear;
-          ">
-        </a-torus>
-
-        <!-- Data nodes -->
-        <a-sphere
-          position="-0.95 1.35 0"
-          radius="0.035"
-          color="#46e0a0"
-          material="
-            emissive: #46e0a0;
-            emissiveIntensity: 4;
-          "
-          animation="
-            property: scale;
-            from: .7 .7 .7;
-            to: 1.5 1.5 1.5;
-            dir: alternate;
-            loop: true;
-            dur: 1200;
-          ">
-        </a-sphere>
-
-        <a-sphere
-          position="0.95 1.35 0"
-          radius="0.035"
-          color="#ffc857"
-          material="
-            emissive: #ffc857;
-            emissiveIntensity: 4;
-          "
-          animation="
-            property: scale;
-            from: .7 .7 .7;
-            to: 1.5 1.5 1.5;
-            dir: alternate;
-            loop: true;
-            dur: 900;
-          ">
-        </a-sphere>
-
-        <!-- Floating data panel -->
         <a-entity
-          id="floating-panel"
-          position="0 1.85 -0.1"
-          scale=".75 .75 .75">
+            id="machine"
+            visible="false"
+            scale=".7 .7 .7">
 
-          <a-plane
-            width="1.7"
-            height=".65"
-            material="
-              shader: flat;
-              color: #06101a;
-              opacity: .92;
-              transparent: true;
-            ">
-          </a-plane>
 
-          <!-- Panel border -->
-          <a-plane
-            position="0 0 .005"
-            width="1.62"
-            height=".57"
-            material="
-              shader: flat;
-              color: #0a1c2a;
-              opacity: .9;
-            ">
-          </a-plane>
+            <!-- FLOOR -->
 
-          <!-- Fake graph -->
-          <a-box
-            position="-0.5 -0.1 .01"
-            width=".04"
-            height=".25"
-            depth=".01"
-            color="#35c8ff">
-          </a-box>
+            <a-box
 
-          <a-box
-            position="-0.38 -0.02 .01"
-            width=".04"
-            height=".41"
-            depth=".01"
-            color="#35c8ff">
-          </a-box>
+                position="0 .02 0"
 
-          <a-box
-            position="-0.26 -0.07 .01"
-            width=".04"
-            height=".31"
-            depth=".01"
-            color="#46e0a0">
-          </a-box>
+                width="2.8"
+                height=".08"
+                depth="2"
 
-          <a-box
-            position="-0.14 .02 .01"
-            width=".04"
-            height=".49"
-            depth=".01"
-            color="#46e0a0">
-          </a-box>
+                color="#08131e"
 
-          <a-box
-            position="-0.02 -.01 .01"
-            width=".04"
-            height=".43"
-            depth=".01"
-            color="#35c8ff">
-          </a-box>
+                material="
+                    metalness:.9;
+                    roughness:.25;
+                ">
+            </a-box>
 
-          <!-- Status dot -->
-          <a-sphere
-            position=".55 .19 .02"
-            radius=".04"
-            color="#46e0a0"
-            material="
-              emissive: #46e0a0;
-              emissiveIntensity: 4;
-            ">
-          </a-sphere>
+
+            <!-- GLOWING FLOOR FRAME -->
+
+            <a-box
+
+                position="0 .075 0"
+
+                width="2.7"
+                height=".025"
+                depth="1.9"
+
+                color="#36d7ff"
+
+                material="
+                    emissive:#36d7ff;
+                    emissiveIntensity:3;
+                ">
+            </a-box>
+
+
+            <!-- MAIN MACHINE -->
+
+            <a-box
+
+                position="0 .7 0"
+
+                width="1.5"
+                height="1.2"
+                depth=".95"
+
+                color="#1b2b3b"
+
+                material="
+                    metalness:.85;
+                    roughness:.25;
+                ">
+            </a-box>
+
+
+            <!-- MACHINE FRONT -->
+
+            <a-box
+
+                position="0 .72 -.49"
+
+                width="1.15"
+                height=".72"
+                depth=".04"
+
+                color="#071018">
+            </a-box>
+
+
+            <!-- DISPLAY -->
+
+            <a-plane
+
+                position="0 .84 -.52"
+
+                width=".7"
+                height=".4"
+
+                material="
+                    shader:flat;
+                    color:#062330;
+                ">
+            </a-plane>
+
+
+            <!-- DISPLAY GRAPH -->
+
+            <a-box
+                position="-.22 .89 -.535"
+                width=".07"
+                height=".16"
+                depth=".01"
+                color="#36d7ff">
+            </a-box>
+
+            <a-box
+                position="-.10 .95 -.535"
+                width=".07"
+                height=".28"
+                depth=".01"
+                color="#36d7ff">
+            </a-box>
+
+            <a-box
+                position=".02 .91 -.535"
+                width=".07"
+                height=".20"
+                depth=".01"
+                color="#44e7a5">
+            </a-box>
+
+            <a-box
+                position=".14 .99 -.535"
+                width=".07"
+                height=".36"
+                depth=".01"
+                color="#44e7a5">
+            </a-box>
+
+
+            <!-- ROTOR -->
+
+            <a-entity id="rotor">
+
+                <a-torus
+
+                    position="0 .65 -.56"
+
+                    rotation="90 0 0"
+
+                    radius=".35"
+
+                    radius-tubular=".055"
+
+                    color="#36d7ff"
+
+                    material="
+                        emissive:#36d7ff;
+                        emissiveIntensity:2;
+                        metalness:.8;
+                    "
+
+                    animation="
+                        property:rotation;
+                        from:90 0 0;
+                        to:90 360 0;
+                        loop:true;
+                        dur:1600;
+                        easing:linear;
+                    ">
+                </a-torus>
+
+                <a-cylinder
+
+                    position="0 .65 -.58"
+
+                    rotation="90 0 0"
+
+                    radius=".11"
+
+                    height=".08"
+
+                    color="#152535">
+                </a-cylinder>
+
+            </a-entity>
+
+
+            <!-- LEFT PIPE -->
+
+            <a-cylinder
+
+                position="-.82 .78 0"
+
+                radius=".08"
+
+                height="1.2"
+
+                color="#516779"
+
+                material="
+                    metalness:.9;
+                    roughness:.2;
+                ">
+            </a-cylinder>
+
+
+            <!-- RIGHT PIPE -->
+
+            <a-cylinder
+
+                position=".82 .78 0"
+
+                radius=".08"
+
+                height="1.2"
+
+                color="#516779"
+
+                material="
+                    metalness:.9;
+                    roughness:.2;
+                ">
+            </a-cylinder>
+
+
+            <!-- STATUS LIGHT -->
+
+            <a-sphere
+
+                id="status-light"
+
+                position="0 1.38 0"
+
+                radius=".09"
+
+                color="#44e7a5"
+
+                material="
+                    emissive:#44e7a5;
+                    emissiveIntensity:5;
+                "
+
+                animation="
+                    property:scale;
+                    from:.8 .8 .8;
+                    to:1.25 1.25 1.25;
+                    dir:alternate;
+                    loop:true;
+                    dur:900;
+                ">
+            </a-sphere>
+
+
+            <!-- HOLOGRAM RING -->
+
+            <a-torus
+
+                position="0 1.55 0"
+
+                rotation="90 0 0"
+
+                radius=".9"
+
+                radius-tubular=".015"
+
+                color="#36d7ff"
+
+                material="
+                    emissive:#36d7ff;
+                    emissiveIntensity:4;
+                    transparent:true;
+                    opacity:.45;
+                "
+
+                animation="
+                    property:rotation;
+                    from:90 0 0;
+                    to:90 360 0;
+                    loop:true;
+                    dur:5000;
+                    easing:linear;
+                ">
+            </a-torus>
+
+
+            <!-- SECOND HOLOGRAM -->
+
+            <a-torus
+
+                position="0 1.55 0"
+
+                rotation="0 90 0"
+
+                radius=".65"
+
+                radius-tubular=".012"
+
+                color="#7b5cff"
+
+                material="
+                    emissive:#7b5cff;
+                    emissiveIntensity:4;
+                    transparent:true;
+                    opacity:.35;
+                "
+
+                animation="
+                    property:rotation;
+                    from:0 90 0;
+                    to:360 90 0;
+                    loop:true;
+                    dur:7000;
+                    easing:linear;
+                ">
+            </a-torus>
+
+
+            <!-- FLOATING HOLOGRAPHIC DATA -->
+
+            <a-entity
+
+                position="0 1.95 0"
+
+                scale=".8 .8 .8">
+
+                <a-plane
+
+                    width="1.8"
+
+                    height=".55"
+
+                    material="
+                        shader:flat;
+                        color:#06141e;
+                        transparent:true;
+                        opacity:.9;
+                    ">
+                </a-plane>
+
+
+                <a-box
+
+                    position="-.5 -.08 .01"
+
+                    width=".04"
+                    height=".24"
+                    depth=".01"
+
+                    color="#36d7ff">
+                </a-box>
+
+
+                <a-box
+
+                    position="-.38 .02 .01"
+
+                    width=".04"
+                    height=".44"
+                    depth=".01"
+
+                    color="#36d7ff">
+                </a-box>
+
+
+                <a-box
+
+                    position="-.26 -.02 .01"
+
+                    width=".04"
+                    height=".36"
+                    depth=".01"
+
+                    color="#44e7a5">
+                </a-box>
+
+
+                <a-box
+
+                    position="-.14 .06 .01"
+
+                    width=".04"
+                    height=".52"
+                    depth=".01"
+
+                    color="#44e7a5">
+                </a-box>
+
+
+                <a-sphere
+
+                    position=".58 .15 .02"
+
+                    radius=".045"
+
+                    color="#44e7a5"
+
+                    material="
+                        emissive:#44e7a5;
+                        emissiveIntensity:5;
+                    ">
+                </a-sphere>
+
+            </a-entity>
+
+
+            <!-- FLOATING DATA NODES -->
+
+            <a-sphere
+                position="-1.05 1.4 0"
+                radius=".035"
+                color="#36d7ff"
+                material="
+                    emissive:#36d7ff;
+                    emissiveIntensity:5;
+                ">
+            </a-sphere>
+
+
+            <a-sphere
+                position="1.05 1.4 0"
+                radius=".035"
+                color="#7b5cff"
+                material="
+                    emissive:#7b5cff;
+                    emissiveIntensity:5;
+                ">
+            </a-sphere>
+
 
         </a-entity>
 
-      </a-entity>
-
     </a-marker>
 
-    <!-- Camera -->
+
     <a-entity camera></a-entity>
 
-  </a-scene>
+</a-scene>
 
 
-  <!-- =========================================================
-       HTML HUD
-       ========================================================= -->
+<!-- ============================================================
+     HUD
+     ============================================================ -->
 
-  <div id="hud">
+<div id="hud">
 
-    <!-- TOP BAR -->
-    <header id="topbar">
+    <div id="grid"></div>
 
-      <div class="brand">
-        <span class="brand-dot"></span>
+    <div id="vignette"></div>
 
-        <div>
-          <div class="brand-title">
-            INDUSTRIE 4.0
-          </div>
 
-          <div class="brand-subtitle">
-            Augmented Reality Control Center
-          </div>
+    <!-- HEADER -->
+
+    <header id="header">
+
+        <div class="logo">
+
+            <div class="logo-mark">
+                ◈
+            </div>
+
+            <div>
+
+                <div class="logo-title">
+                    INDUSTRIE 4.0
+                </div>
+
+                <div class="logo-sub">
+                    Augmented Reality Control Center
+                </div>
+
+            </div>
+
         </div>
-      </div>
 
-      <div id="tracking">
 
-        <span id="tracking-indicator"></span>
+        <div class="header-status">
 
-        <span id="tracking-text">
-          Suche Marker …
-        </span>
+            <div class="header-stat">
 
-      </div>
+                <span>
+                    SYSTEM
+                </span>
+
+                <strong>
+                    ONLINE
+                </strong>
+
+            </div>
+
+
+            <div class="header-stat">
+
+                <span>
+                    AR ENGINE
+                </span>
+
+                <strong>
+                    READY
+                </strong>
+
+            </div>
+
+        </div>
 
     </header>
 
 
-    <!-- SCANNER -->
-    <div id="scanner">
+    <!-- TARGET -->
 
-      <div class="crosshair-corner"></div>
+    <div id="target-frame">
 
-    </div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
 
-
-    <!-- CROSSHAIR -->
-    <div id="crosshair">
-
-      <span class="cross-corner c1"></span>
-      <span class="cross-corner c2"></span>
-      <span class="cross-corner c3"></span>
-      <span class="cross-corner c4"></span>
+        <div id="scan-line"></div>
 
     </div>
 
 
-    <!-- EVENT LOG -->
-    <section id="event-log">
+    <div id="target-center"></div>
 
-      <div class="log-title">
-        System Events
-      </div>
 
-      <div
-        class="log-item success"
-        id="log-1">
-        <span>●</span>
+    <!-- LEFT PANEL -->
 
-        <div>
-          <span class="log-time">--:--:--</span><br>
-          System bereit
+    <section id="left-panel">
+
+        <div class="panel-label">
+            Identified Asset
         </div>
-      </div>
 
-      <div
-        class="log-item"
-        id="log-2">
-        <span>●</span>
-
-        <div>
-          <span class="log-time">--:--:--</span><br>
-          AR Engine gestartet
+        <div class="machine-name">
+            MACHINE A-104
         </div>
-      </div>
 
-      <div
-        class="log-item"
-        id="log-3">
-        <span>●</span>
-
-        <div>
-          <span class="log-time">--:--:--</span><br>
-          Warte auf Marker
+        <div class="machine-id">
+            INDUSTRIAL UNIT
         </div>
-      </div>
+
+
+        <div class="data-row">
+
+            <div class="data-row-head">
+
+                <span>
+                    Auslastung
+                </span>
+
+                <strong id="utilization">
+                    87%
+                </strong>
+
+            </div>
+
+            <div class="bar">
+                <i
+                    id="utilization-bar"
+                    style="width:87%">
+                </i>
+            </div>
+
+        </div>
+
+
+        <div class="data-row">
+
+            <div class="data-row-head">
+
+                <span>
+                    Effizienz
+                </span>
+
+                <strong id="efficiency">
+                    94%
+                </strong>
+
+            </div>
+
+            <div class="bar">
+                <i
+                    id="efficiency-bar"
+                    style="width:94%">
+                </i>
+            </div>
+
+        </div>
+
+
+        <div class="data-row">
+
+            <div class="data-row-head">
+
+                <span>
+                    Temperatur
+                </span>
+
+                <strong id="temperature">
+                    68°C
+                </strong>
+
+            </div>
+
+            <div class="bar">
+                <i
+                    id="temperature-bar"
+                    style="width:68%">
+                </i>
+            </div>
+
+        </div>
 
     </section>
 
 
-    <!-- KPI DASHBOARD -->
-    <section id="dashboard">
+    <!-- RIGHT PANEL -->
 
-      <div class="dashboard-header">
+    <section id="right-panel">
 
-        <div class="dashboard-title">
-          MASCHINE #A-104
+        <div class="panel-label">
+            System Status
         </div>
 
-        <div class="live">
-          LIVE
-        </div>
 
-      </div>
+        <div class="status-big">
 
+            <span class="status-dot"></span>
 
-      <div class="kpi">
-
-        <div class="kpi-top">
-
-          <span class="kpi-name">
-            Auslastung
-          </span>
-
-          <span
-            class="kpi-value"
-            id="kpi-utilization">
-            87%
-          </span>
+            <span>
+                OPERATIONAL
+            </span>
 
         </div>
 
-        <div class="progress">
-          <div
-            class="progress-bar"
-            id="bar-utilization"
-            style="width:87%">
-          </div>
-        </div>
 
-      </div>
+        <div class="status-message">
 
-
-      <div class="kpi">
-
-        <div class="kpi-top">
-
-          <span class="kpi-name">
-            Effizienz
-          </span>
-
-          <span
-            class="kpi-value"
-            id="kpi-efficiency">
-            94%
-          </span>
+            Alle Systeme arbeiten
+            innerhalb der definierten
+            Parameter.
 
         </div>
 
-        <div class="progress">
-          <div
-            class="progress-bar"
-            id="bar-efficiency"
-            style="width:94%">
-          </div>
-        </div>
 
-      </div>
+        <div class="data-row">
 
+            <div class="data-row-head">
 
-      <div class="kpi">
+                <span>
+                    Produktion
+                </span>
 
-        <div class="kpi-top">
+                <strong id="production">
+                    1.284
+                </strong>
 
-          <span class="kpi-name">
-            Temperatur
-          </span>
-
-          <span
-            class="kpi-value"
-            id="kpi-temperature">
-            68°C
-          </span>
+            </div>
 
         </div>
 
-        <div class="progress">
-          <div
-            class="progress-bar"
-            id="bar-temperature"
-            style="width:68%">
-          </div>
-        </div>
 
-      </div>
+        <div class="data-row">
 
+            <div class="data-row-head">
 
-      <div class="kpi">
+                <span>
+                    Drehzahl
+                </span>
 
-        <div class="kpi-top">
+                <strong id="rpm">
+                    1.840 RPM
+                </strong>
 
-          <span class="kpi-name">
-            Produktion
-          </span>
-
-          <span
-            class="kpi-value"
-            id="kpi-production">
-            1.284
-          </span>
+            </div>
 
         </div>
-
-        <div class="progress">
-          <div
-            class="progress-bar"
-            style="width:76%">
-          </div>
-        </div>
-
-      </div>
 
     </section>
 
 
-    <!-- BOTTOM CONTROLS -->
-    <nav id="controls">
+    <!-- BOTTOM INFO -->
 
-      <button
-        class="control-btn"
-        id="btn-rotate">
+    <section id="bottom-info">
 
-        <span class="control-icon">
-          ↻
-        </span>
+        <div class="bottom-title">
+            AR MACHINE ANALYSIS
+        </div>
 
-        Drehen
+        <div class="bottom-sub">
+            REAL-TIME INDUSTRIAL TELEMETRY
+        </div>
 
-      </button>
-
-
-      <button
-        class="control-btn"
-        id="btn-explode">
-
-        <span class="control-icon">
-          ◈
-        </span>
-
-        Explode
-
-      </button>
+    </section>
 
 
-      <button
-        class="control-btn"
-        id="btn-data">
+    <!-- SCAN MESSAGE -->
 
-        <span class="control-icon">
-          ▦
-        </span>
+    <div id="scan-message">
 
-        Daten
+        <span class="scan-symbol"></span>
 
-      </button>
+        HIRO MARKER SCANNEN · POSITIONIEREN
+
+    </div>
 
 
-      <button
-        class="control-btn"
-        id="btn-reset">
+    <!-- NAVIGATION -->
 
-        <span class="control-icon">
-          ⟳
-        </span>
+    <nav id="navigation">
 
-        Reset
+        <button
+            class="nav-button active"
+            id="btn-overview">
 
-      </button>
+            OVERVIEW
+
+        </button>
+
+
+        <button
+            class="nav-button"
+            id="btn-rotate">
+
+            ROTATE
+
+        </button>
+
+
+        <button
+            class="nav-button"
+            id="btn-explode">
+
+            EXPLODE
+
+        </button>
+
+
+        <button
+            class="nav-button"
+            id="btn-data">
+
+            DATA
+
+        </button>
+
+
+        <button
+            class="nav-button"
+            id="btn-reset">
+
+            RESET
+
+        </button>
 
     </nav>
 
 
-    <!-- SCAN MESSAGE -->
-    <div id="scan-message">
+    <!-- TELEMETRY -->
 
-      <span class="scan-icon"></span>
+    <div id="telemetry">
 
-      <span id="scan-message-text">
-        Hiro-Marker in den Kamerabereich halten
-      </span>
+        <div class="telemetry-item">
+            FPS
+            <strong id="fps">--</strong>
+        </div>
 
-    </div>
+        <div class="telemetry-item">
+            TRACK
+            <strong id="track">0.0s</strong>
+        </div>
 
-
-    <!-- SYSTEM INFO -->
-    <div id="system-info">
-
-      <span class="system-item">
-        FPS:
-        <strong id="fps">--</strong>
-      </span>
-
-      <span class="system-item">
-        TRACK:
-        <strong id="track-time">0.0s</strong>
-      </span>
-
-      <span class="system-item">
-        MARKER:
-        <strong id="marker-count">0</strong>
-      </span>
+        <div class="telemetry-item">
+            MARKER
+            <strong id="marker-count">0</strong>
+        </div>
 
     </div>
 
-  </div>
+</div>
 
 
-  <!-- =========================================================
-       JAVASCRIPT
-       ========================================================= -->
+<script>
 
-  <script>
-    (() => {
+/* ============================================================
+   APPLICATION
+   ============================================================ */
 
-      "use strict";
+(() => {
 
-      /* -------------------------------------------------------
-         ELEMENTS
-         ------------------------------------------------------- */
-
-      const marker =
-        document.getElementById("hiro-marker");
-
-      const model =
-        document.getElementById("factory-model");
-
-      const dashboard =
-        document.getElementById("dashboard");
-
-      const controls =
-        document.getElementById("controls");
-
-      const eventLog =
-        document.getElementById("event-log");
-
-      const scanner =
-        document.getElementById("scanner");
-
-      const crosshair =
-        document.getElementById("crosshair");
-
-      const scanMessage =
-        document.getElementById("scan-message");
-
-      const scanMessageText =
-        document.getElementById("scan-message-text");
-
-      const tracking =
-        document.getElementById("tracking");
-
-      const trackingText =
-        document.getElementById("tracking-text");
-
-      const markerCountElement =
-        document.getElementById("marker-count");
-
-      const fpsElement =
-        document.getElementById("fps");
-
-      const trackTimeElement =
-        document.getElementById("track-time");
+"use strict";
 
 
-      /* -------------------------------------------------------
-         STATE
-         ------------------------------------------------------- */
+/* ============================================================
+   DOM
+   ============================================================ */
 
-      let markerFound = false;
+const marker =
+    document.getElementById(
+        "hiro-marker"
+    );
 
-      let markerCount = 0;
+const machine =
+    document.getElementById(
+        "machine"
+    );
 
-      let trackingStarted = 0;
+const leftPanel =
+    document.getElementById(
+        "left-panel"
+    );
 
-      let modelRotation = 0;
+const rightPanel =
+    document.getElementById(
+        "right-panel"
+    );
 
-      let exploded = false;
+const bottomInfo =
+    document.getElementById(
+        "bottom-info"
+    );
 
-      let dataVisible = true;
+const scanMessage =
+    document.getElementById(
+        "scan-message"
+    );
 
-      let lastFrame = performance.now();
+const targetFrame =
+    document.getElementById(
+        "target-frame"
+    );
 
-      let frameCounter = 0;
-
-      let fpsTimer = performance.now();
-
-
-      /* -------------------------------------------------------
-         HELPERS
-         ------------------------------------------------------- */
-
-      function now() {
-
-        return new Date().toLocaleTimeString(
-          "de-DE",
-          {
-            hour12: false
-          }
-        );
-
-      }
+const markerCountElement =
+    document.getElementById(
+        "marker-count"
+    );
 
 
-      function addLog(
-        message,
-        type = ""
-      ) {
+/* ============================================================
+   STATE
+   ============================================================ */
 
-        const item =
-          document.createElement("div");
+let detected =
+    false;
 
-        item.className =
-          "log-item " + type;
+let markerCount =
+    0;
 
-        item.innerHTML = `
-          <span>●</span>
-          <div>
-            <span class="log-time">
-              ${now()}
-            </span><br>
-            ${message}
-          </div>
-        `;
+let startTracking =
+    0;
 
-        eventLog.appendChild(item);
+let rotation =
+    0;
 
-        while (eventLog.children.length > 4) {
+let exploded =
+    false;
 
-          eventLog.removeChild(
-            eventLog.children[1]
-          );
 
+/* ============================================================
+   MARKER FOUND
+   ============================================================ */
+
+marker.addEventListener(
+    "markerFound",
+    () => {
+
+        if (!detected) {
+
+            markerCount++;
+
+            markerCountElement.textContent =
+                markerCount;
         }
 
-      }
+        detected =
+            true;
 
-
-      function setTracking(
-        active
-      ) {
-
-        markerFound = active;
-
-        if (active) {
-
-          tracking.classList.add("active");
-
-          trackingText.textContent =
-            "Marker aktiv";
-
-          scanner.classList.add(
-            "marker-active"
-          );
-
-          crosshair.style.opacity =
-            "0";
-
-          scanMessage.classList.add(
-            "hidden"
-          );
-
-          dashboard.classList.add(
-            "visible"
-          );
-
-          controls.classList.add(
-            "visible"
-          );
-
-          eventLog.classList.add(
-            "visible"
-          );
-
-          model.setAttribute(
-            "visible",
-            "true"
-          );
-
-          trackingStarted =
+        startTracking =
             performance.now();
 
-        } else {
 
-          tracking.classList.remove(
-            "active"
-          );
+        machine.setAttribute(
+            "visible",
+            "true"
+        );
 
-          trackingText.textContent =
-            "Suche Marker …";
 
-          scanner.classList.remove(
-            "marker-active"
-          );
+        leftPanel.classList.add(
+            "visible"
+        );
 
-          crosshair.style.opacity =
-            ".45";
+        rightPanel.classList.add(
+            "visible"
+        );
 
-          scanMessage.classList.remove(
+        bottomInfo.classList.add(
+            "visible"
+        );
+
+        scanMessage.classList.add(
             "hidden"
-          );
+        );
 
-          dashboard.classList.remove(
-            "visible"
-          );
 
-          controls.classList.remove(
-            "visible"
-          );
+        targetFrame.style.width =
+            "min(500px, 82vw)";
 
-          eventLog.classList.remove(
-            "visible"
-          );
+        targetFrame.style.height =
+            "min(400px, 68vw)";
 
-          model.setAttribute(
+
+        console.log(
+            "AR marker detected"
+        );
+
+    }
+);
+
+
+/* ============================================================
+   MARKER LOST
+   ============================================================ */
+
+marker.addEventListener(
+    "markerLost",
+    () => {
+
+        detected =
+            false;
+
+        machine.setAttribute(
             "visible",
             "false"
-          );
-
-        }
-
-      }
-
-
-      /* -------------------------------------------------------
-         MARKER FOUND
-         ------------------------------------------------------- */
-
-      marker.addEventListener(
-        "markerFound",
-        () => {
-
-          markerCount++;
-
-          markerCountElement.textContent =
-            markerCount;
-
-          setTracking(true);
-
-          scanMessageText.textContent =
-            "Industrieanlage erkannt · Live-Daten aktiv";
-
-          addLog(
-            "Hiro-Marker erkannt",
-            "success"
-          );
-
-          addLog(
-            "Maschine #A-104 verbunden",
-            "success"
-          );
-
-        }
-      );
-
-
-      /* -------------------------------------------------------
-         MARKER LOST
-         ------------------------------------------------------- */
-
-      marker.addEventListener(
-        "markerLost",
-        () => {
-
-          setTracking(false);
-
-          scanMessageText.textContent =
-            "Hiro-Marker in den Kamerabereich halten";
-
-          addLog(
-            "Tracking verloren",
-            "warning"
-          );
-
-        }
-      );
-
-
-      /* -------------------------------------------------------
-         ROTATE
-         ------------------------------------------------------- */
-
-      document
-        .getElementById("btn-rotate")
-        .addEventListener(
-          "click",
-          () => {
-
-            modelRotation += 90;
-
-            model.object3D.rotation.y =
-              THREE.MathUtils.degToRad(
-                modelRotation
-              );
-
-            addLog(
-              "3D-Modell gedreht"
-            );
-
-          }
         );
 
+        leftPanel.classList.remove(
+            "visible"
+        );
 
-      /* -------------------------------------------------------
-         EXPLODE VIEW
-         ------------------------------------------------------- */
+        rightPanel.classList.remove(
+            "visible"
+        );
 
-      document
-        .getElementById("btn-explode")
-        .addEventListener(
-          "click",
-          () => {
+        bottomInfo.classList.remove(
+            "visible"
+        );
 
-            exploded = !exploded;
+        scanMessage.classList.remove(
+            "hidden"
+        );
 
-            const machine =
-              model.querySelectorAll(
-                "a-box, a-cylinder, a-torus"
-              );
+        targetFrame.style.width =
+            "min(420px, 75vw)";
 
-            machine.forEach(
-              (element, index) => {
+        targetFrame.style.height =
+            "min(330px, 58vw)";
 
-                if (
-                  index < 8
-                ) {
+    }
+);
 
-                  const base =
-                    element.getAttribute(
-                      "position"
+
+/* ============================================================
+   ROTATE
+   ============================================================ */
+
+document
+    .getElementById("btn-rotate")
+    .addEventListener(
+        "click",
+        () => {
+
+            if (!detected)
+                return;
+
+            rotation += 90;
+
+            machine.object3D.rotation.y =
+                THREE.MathUtils.degToRad(
+                    rotation
+                );
+
+        }
+    );
+
+
+/* ============================================================
+   EXPLODE VIEW
+   ============================================================ */
+
+document
+    .getElementById("btn-explode")
+    .addEventListener(
+        "click",
+        () => {
+
+            if (!detected)
+                return;
+
+            exploded =
+                !exploded;
+
+
+            const objects =
+                machine.querySelectorAll(
+                    "a-box, a-cylinder, a-torus"
+                );
+
+
+            objects.forEach(
+                (object, index) => {
+
+                    const position =
+                        object.getAttribute(
+                            "position"
+                        );
+
+                    if (!position)
+                        return;
+
+
+                    const offset =
+                        exploded
+                            ? (
+                                index % 2 === 0
+                                    ? .18
+                                    : -.18
+                              )
+                            : 0;
+
+
+                    object.setAttribute(
+                        "animation__explode",
+                        {
+                            property:
+                                "position",
+
+                            to:
+                                `${position.x + offset}
+                                 ${position.y}
+                                 ${position.z}`,
+
+                            dur:
+                                450,
+
+                            easing:
+                                "easeOutCubic"
+                        }
                     );
 
-                  if (!base) return;
-
-                  const x =
-                    base.x;
-
-                  const y =
-                    base.y;
-
-                  const z =
-                    base.z;
-
-                  const offset =
-                    exploded
-                      ? (index % 2 === 0 ? 0.18 : -0.18)
-                      : 0;
-
-                  element.setAttribute(
-                    "animation__explode",
-                    {
-                      property:
-                        "position",
-                      to:
-                        `${x + offset} ${y} ${z}`,
-                      dur:
-                        500,
-                      easing:
-                        "easeOutCubic"
-                    }
-                  );
-
                 }
-
-              }
             );
 
-            addLog(
-              exploded
-                ? "Exploded View aktiviert"
-                : "Exploded View deaktiviert"
+        }
+    );
+
+
+/* ============================================================
+   DATA
+   ============================================================ */
+
+document
+    .getElementById("btn-data")
+    .addEventListener(
+        "click",
+        () => {
+
+            leftPanel.classList.toggle(
+                "visible"
             );
 
-          }
-        );
-
-
-      /* -------------------------------------------------------
-         DATA TOGGLE
-         ------------------------------------------------------- */
-
-      document
-        .getElementById("btn-data")
-        .addEventListener(
-          "click",
-          () => {
-
-            dataVisible =
-              !dataVisible;
-
-            dashboard.style.display =
-              dataVisible
-                ? "block"
-                : "none";
-
-            const panel =
-              document.getElementById(
-                "floating-panel"
-              );
-
-            if (panel) {
-
-              panel.setAttribute(
-                "visible",
-                dataVisible
-              );
-
-            }
-
-            addLog(
-              dataVisible
-                ? "Live-Daten eingeblendet"
-                : "Live-Daten ausgeblendet"
+            rightPanel.classList.toggle(
+                "visible"
             );
 
-          }
-        );
+        }
+    );
 
 
-      /* -------------------------------------------------------
-         RESET
-         ------------------------------------------------------- */
+/* ============================================================
+   RESET
+   ============================================================ */
 
-      document
-        .getElementById("btn-reset")
-        .addEventListener(
-          "click",
-          () => {
+document
+    .getElementById("btn-reset")
+    .addEventListener(
+        "click",
+        () => {
 
-            modelRotation = 0;
+            rotation = 0;
 
             exploded = false;
 
-            dataVisible = true;
+            machine.object3D.rotation.y =
+                0;
 
-            model.object3D.rotation.y = 0;
-
-            dashboard.style.display =
-              "block";
-
-            const panel =
-              document.getElementById(
-                "floating-panel"
-              );
-
-            if (panel) {
-
-              panel.setAttribute(
+            machine.setAttribute(
                 "visible",
-                "true"
-              );
-
-            }
-
-            addLog(
-              "Systemparameter zurückgesetzt",
-              "success"
+                detected
             );
 
-          }
-        );
+            leftPanel.classList.add(
+                "visible"
+            );
 
+            rightPanel.classList.add(
+                "visible"
+            );
 
-      /* -------------------------------------------------------
-         SIMULATED LIVE DATA
-         ------------------------------------------------------- */
-
-      function updateLiveData() {
-
-        if (!markerFound) {
-          return;
         }
+    );
 
-        const utilization =
-          Math.round(
+
+/* ============================================================
+   SIMULATED LIVE DATA
+   ============================================================ */
+
+function updateData() {
+
+    if (!detected)
+        return;
+
+
+    const utilization =
+        Math.round(
             82 +
             Math.random() * 12
-          );
-
-        const efficiency =
-          Math.round(
-            90 +
-            Math.random() * 8
-          );
-
-        const temperature =
-          Math.round(
-            63 +
-            Math.random() * 10
-          );
-
-        const production =
-          1250 +
-          Math.floor(
-            Math.random() * 70
-          );
-
-
-        document.getElementById(
-          "kpi-utilization"
-        ).textContent =
-          utilization + "%";
-
-        document.getElementById(
-          "bar-utilization"
-        ).style.width =
-          utilization + "%";
-
-
-        document.getElementById(
-          "kpi-efficiency"
-        ).textContent =
-          efficiency + "%";
-
-        document.getElementById(
-          "bar-efficiency"
-        ).style.width =
-          efficiency + "%";
-
-
-        document.getElementById(
-          "kpi-temperature"
-        ).textContent =
-          temperature + "°C";
-
-        document.getElementById(
-          "bar-temperature"
-        ).style.width =
-          temperature + "%";
-
-
-        document.getElementById(
-          "kpi-production"
-        ).textContent =
-          production.toLocaleString(
-            "de-DE"
-          );
-
-      }
-
-
-      setInterval(
-        updateLiveData,
-        1200
-      );
-
-
-      /* -------------------------------------------------------
-         FPS COUNTER
-         ------------------------------------------------------- */
-
-      function animationLoop(
-        timestamp
-      ) {
-
-        frameCounter++;
-
-        if (
-          timestamp -
-          fpsTimer >=
-          1000
-        ) {
-
-          fpsElement.textContent =
-            frameCounter;
-
-          frameCounter = 0;
-
-          fpsTimer =
-            timestamp;
-
-        }
-
-
-        if (
-          markerFound &&
-          trackingStarted
-        ) {
-
-          const elapsed =
-            (
-              timestamp -
-              trackingStarted
-            ) / 1000;
-
-          trackTimeElement.textContent =
-            elapsed.toFixed(1) + "s";
-
-        }
-
-
-        lastFrame =
-          timestamp;
-
-        requestAnimationFrame(
-          animationLoop
         );
 
-      }
 
-      requestAnimationFrame(
-        animationLoop
-      );
-
-
-      /* -------------------------------------------------------
-         DEBUG FUNCTIONS
-         ------------------------------------------------------- */
-
-      window.fireEventMarkerFound =
-        () => {
-
-          marker.dispatchEvent(
-            new CustomEvent(
-              "markerFound"
-            )
-          );
-
-        };
+    const efficiency =
+        Math.round(
+            91 +
+            Math.random() * 7
+        );
 
 
-      window.fireEventMarkerLost =
-        () => {
-
-          marker.dispatchEvent(
-            new CustomEvent(
-              "markerLost"
-            )
-          );
-
-        };
+    const temperature =
+        Math.round(
+            64 +
+            Math.random() * 8
+        );
 
 
-      /* -------------------------------------------------------
-         INITIAL LOG
-         ------------------------------------------------------- */
-
-      setTimeout(
-        () => {
-
-          addLog(
-            "AR Engine bereit",
-            "success"
-          );
-
-        },
-        500
-      );
+    const production =
+        1250 +
+        Math.floor(
+            Math.random() * 80
+        );
 
 
-      setTimeout(
-        () => {
+    const rpm =
+        1780 +
+        Math.floor(
+            Math.random() * 140
+        );
 
-          addLog(
-            "Kamera wird initialisiert"
-          );
 
-        },
+    document.getElementById(
+        "utilization"
+    ).textContent =
+        utilization + "%";
+
+
+    document.getElementById(
+        "utilization-bar"
+    ).style.width =
+        utilization + "%";
+
+
+    document.getElementById(
+        "efficiency"
+    ).textContent =
+        efficiency + "%";
+
+
+    document.getElementById(
+        "efficiency-bar"
+    ).style.width =
+        efficiency + "%";
+
+
+    document.getElementById(
+        "temperature"
+    ).textContent =
+        temperature + "°C";
+
+
+    document.getElementById(
+        "temperature-bar"
+    ).style.width =
+        temperature + "%";
+
+
+    document.getElementById(
+        "production"
+    ).textContent =
+        production.toLocaleString(
+            "de-DE"
+        );
+
+
+    document.getElementById(
+        "rpm"
+    ).textContent =
+        rpm.toLocaleString(
+            "de-DE"
+        ) + " RPM";
+
+}
+
+
+setInterval(
+    updateData,
+    1000
+);
+
+
+/* ============================================================
+   FPS
+   ============================================================ */
+
+let frames =
+    0;
+
+let fpsTime =
+    performance.now();
+
+
+function renderLoop(
+    timestamp
+) {
+
+    frames++;
+
+
+    if (
+        timestamp -
+        fpsTime >=
         1000
-      );
+    ) {
+
+        document.getElementById(
+            "fps"
+        ).textContent =
+            frames;
+
+        frames =
+            0;
+
+        fpsTime =
+            timestamp;
+
+    }
 
 
-    })();
-  </script>
+    if (
+        detected &&
+        startTracking
+    ) {
+
+        const seconds =
+            (
+                timestamp -
+                startTracking
+            ) / 1000;
+
+
+        document.getElementById(
+            "track"
+        ).textContent =
+            seconds.toFixed(1) + "s";
+
+    }
+
+
+    requestAnimationFrame(
+        renderLoop
+    );
+
+}
+
+
+requestAnimationFrame(
+    renderLoop
+);
+
+
+/* ============================================================
+   DEBUG
+   ============================================================ */
+
+window.fireEventMarkerFound =
+    () => {
+
+        marker.dispatchEvent(
+            new CustomEvent(
+                "markerFound"
+            )
+        );
+
+    };
+
+
+window.fireEventMarkerLost =
+    () => {
+
+        marker.dispatchEvent(
+            new CustomEvent(
+                "markerLost"
+            )
+        );
+
+    };
+
+
+})();
+
+</script>
 
 </body>
 </html>
+```
