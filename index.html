@@ -2,307 +2,2275 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Industrie 4.0 · AR Mockup</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>Industrie 4.0 · AR Control Center</title>
+
+  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
+  <!-- AR.js -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+
   <style>
     :root {
       color-scheme: dark;
-      --bg-panel: rgba(14, 18, 26, 0.82);
-      --border: rgba(120, 200, 255, 0.28);
+
+      --bg: #05080d;
+      --panel: rgba(8, 14, 23, 0.86);
+      --panel-strong: rgba(10, 18, 29, 0.96);
+
+      --border: rgba(100, 200, 255, 0.25);
+
       --accent: #35c8ff;
-      --accent-dim: rgba(53, 200, 255, 0.14);
-      --text: #eaf2fb;
-      --text-dim: #8ea3ba;
-      --ok: #46d998;
-      --idle: #6b7c92;
-      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --accent-2: #7c5cff;
+
+      --ok: #46e0a0;
+      --warning: #ffc857;
+      --danger: #ff5c7a;
+
+      --text: #edf7ff;
+      --muted: #8095aa;
+
+      --shadow:
+        0 12px 40px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+
+      --font:
+        Inter,
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
+    html,
     body {
       margin: 0;
-      font-family: var(--font);
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      background: #05070b;
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--text);
     }
 
-    video, canvas {
+    body {
+      position: relative;
+    }
+
+    /* =========================================================
+       AR CAMERA
+       ========================================================= */
+
+    video,
+    canvas {
+      position: fixed !important;
+      inset: 0 !important;
+
       width: 100vw !important;
       height: 100vh !important;
-      object-fit: contain !important;
+
+      object-fit: cover !important;
     }
 
-    /* ---- Top status bar ---- */
-    #statusbar {
+    video {
+      z-index: 0 !important;
+    }
+
+    canvas {
+      z-index: 1 !important;
+    }
+
+    a-scene {
+      position: fixed !important;
+      inset: 0 !important;
+
+      width: 100vw !important;
+      height: 100vh !important;
+
+      z-index: 0;
+    }
+
+    /* =========================================================
+       GLOBAL HUD
+       ========================================================= */
+
+    #hud {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      inset: 0;
       z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 12px 18px;
-      background: linear-gradient(180deg, rgba(5,7,11,0.85) 0%, rgba(5,7,11,0) 100%);
+
       pointer-events: none;
+    }
+
+    /* =========================================================
+       TOP BAR
+       ========================================================= */
+
+    #topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+
+      padding:
+        max(14px, env(safe-area-inset-top))
+        18px
+        16px;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(3,7,12,.94),
+          rgba(3,7,12,.55),
+          transparent
+        );
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      color: var(--text);
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
+      gap: 11px;
     }
 
-    .brand .dot {
-      width: 9px; height: 9px;
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+
       border-radius: 50%;
+
       background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
+
+      box-shadow:
+        0 0 8px var(--accent),
+        0 0 20px rgba(53,200,255,.7);
+
+      animation: brandPulse 2s infinite;
     }
 
-    .brand small {
-      display: block;
-      font-size: 11px;
-      font-weight: 400;
-      color: var(--text-dim);
-      letter-spacing: 0.4px;
+    @keyframes brandPulse {
+      0%,100% {
+        opacity: .65;
+      }
+
+      50% {
+        opacity: 1;
+      }
     }
 
-    /* ---- Tracking pill ---- */
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+
+    .brand-subtitle {
+      margin-top: 2px;
+
+      font-size: 10px;
+      color: var(--muted);
+
+      letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+
+    /* =========================================================
+       TRACKING STATUS
+       ========================================================= */
+
     #tracking {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 7px 14px;
-      border: 1px solid var(--border);
+
+      padding: 8px 12px;
+
+      border:
+        1px solid rgba(255,255,255,.12);
+
       border-radius: 999px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(8px);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 500;
-      transition: border-color 0.25s, color 0.25s;
+
+      background: rgba(5,10,17,.7);
+
+      backdrop-filter: blur(12px);
+
+      font-size: 11px;
+      font-weight: 600;
+
+      transition: .3s ease;
     }
 
-    #tracking .indicator {
-      width: 10px; height: 10px;
+    #tracking-indicator {
+      width: 8px;
+      height: 8px;
+
       border-radius: 50%;
-      background: var(--idle);
-      transition: background 0.25s, box-shadow 0.25s;
+
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
     }
 
-    #tracking.active { border-color: rgba(70, 217, 152, 0.5); }
-    #tracking.active .indicator {
+    #tracking.active {
+      border-color: rgba(70,224,160,.4);
+    }
+
+    #tracking.active #tracking-indicator {
       background: var(--ok);
-      box-shadow: 0 0 10px var(--ok);
+      box-shadow: 0 0 12px var(--ok);
     }
 
-    /* ---- Info panel (marker found) ---- */
-    #overlay {
-      position: fixed;
+    /* =========================================================
+       CROSSHAIR
+       ========================================================= */
+
+    #crosshair {
+      position: absolute;
+
       left: 50%;
-      bottom: 96px;
-      transform: translateX(-50%) translateY(12px);
-      z-index: 15;
-      width: min(340px, calc(100vw - 36px));
-      padding: 0;
-      border: 1px solid var(--border);
+      top: 50%;
+
+      width: 70px;
+      height: 70px;
+
+      transform: translate(-50%, -50%);
+
+      opacity: .45;
+
+      transition: .3s ease;
+    }
+
+    #crosshair::before,
+    #crosshair::after {
+      content: "";
+
+      position: absolute;
+      inset: 50%;
+
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    #crosshair::before {
+      width: 2px;
+      height: 100%;
+      transform: translate(-50%, -50%);
+    }
+
+    #crosshair::after {
+      width: 100%;
+      height: 2px;
+      transform: translate(-50%, -50%);
+    }
+
+    .cross-corner {
+      position: absolute;
+
+      width: 15px;
+      height: 15px;
+
+      border-color: var(--accent);
+      border-style: solid;
+    }
+
+    .c1 {
+      left: 0;
+      top: 0;
+      border-width: 2px 0 0 2px;
+    }
+
+    .c2 {
+      right: 0;
+      top: 0;
+      border-width: 2px 2px 0 0;
+    }
+
+    .c3 {
+      left: 0;
+      bottom: 0;
+      border-width: 0 0 2px 2px;
+    }
+
+    .c4 {
+      right: 0;
+      bottom: 0;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* =========================================================
+       SCANNER
+       ========================================================= */
+
+    #scanner {
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      width: min(330px, 70vw);
+      height: min(230px, 48vw);
+
+      transform: translate(-50%, -50%);
+
+      border:
+        1px solid rgba(53,200,255,.28);
+
       border-radius: 14px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(10px);
-      color: var(--text);
+
+      opacity: .8;
+
+      pointer-events: none;
+    }
+
+    #scanner::after {
+      content: "";
+
+      position: absolute;
+
+      left: 0;
+      right: 0;
+
+      height: 1px;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+
+      box-shadow:
+        0 0 12px var(--accent);
+
+      animation: scanLine 2.2s linear infinite;
+    }
+
+    @keyframes scanLine {
+      from {
+        top: 0;
+      }
+
+      to {
+        top: 100%;
+      }
+    }
+
+    #scanner.marker-active {
       opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-      overflow: hidden;
     }
 
-    #overlay.visible {
-      opacity: 1;
-      visibility: visible;
-      transform: translateX(-50%) translateY(0);
-    }
+    /* =========================================================
+       CENTER MESSAGE
+       ========================================================= */
 
-    .panel-head {
+    #scan-message {
+      position: absolute;
+
+      left: 50%;
+      bottom: 82px;
+
+      transform: translateX(-50%);
+
+      width: max-content;
+      max-width: calc(100vw - 30px);
+
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 13px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
+
+      padding: 10px 16px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 999px;
+
+      background: rgba(5,10,17,.78);
+
+      backdrop-filter: blur(12px);
+
+      color: var(--muted);
+
+      font-size: 12px;
+
+      transition: .3s ease;
     }
 
-    .panel-head .icon {
-      display: grid;
-      place-items: center;
-      width: 30px; height: 30px;
-      border-radius: 8px;
-      background: var(--accent-dim);
-      color: var(--accent);
+    #scan-message.hidden {
+      opacity: 0;
+      transform:
+        translateX(-50%)
+        translateY(10px);
+    }
+
+    .scan-icon {
+      width: 15px;
+      height: 15px;
+
+      border:
+        2px solid var(--accent);
+
+      border-radius: 4px;
+
+      animation: scanIcon 1.5s infinite;
+    }
+
+    @keyframes scanIcon {
+      0%,100% {
+        transform: scale(.8);
+        opacity: .4;
+      }
+
+      50% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* =========================================================
+       RIGHT SIDE KPI PANEL
+       ========================================================= */
+
+    #dashboard {
+      position: absolute;
+
+      right: 18px;
+      top: 105px;
+
+      width: 205px;
+
+      padding: 14px;
+
+      background: var(--panel);
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 14px;
+
+      box-shadow: var(--shadow);
+
+      backdrop-filter: blur(14px);
+
+      transform: translateX(230px);
+
+      opacity: 0;
+
+      transition:
+        transform .4s ease,
+        opacity .4s ease;
+    }
+
+    #dashboard.visible {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      margin-bottom: 13px;
+
+      padding-bottom: 10px;
+
+      border-bottom:
+        1px solid rgba(255,255,255,.07);
+    }
+
+    .dashboard-title {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .live {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+
+      color: var(--ok);
+
+      font-size: 9px;
+      font-weight: 700;
+
+      text-transform: uppercase;
+    }
+
+    .live::before {
+      content: "";
+
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: var(--ok);
+
+      box-shadow: 0 0 7px var(--ok);
+    }
+
+    .kpi {
+      margin-bottom: 12px;
+    }
+
+    .kpi-top {
+      display: flex;
+      justify-content: space-between;
+
+      margin-bottom: 5px;
+    }
+
+    .kpi-name {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .kpi-value {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .progress {
+      height: 4px;
+
+      overflow: hidden;
+
+      border-radius: 99px;
+
+      background: rgba(255,255,255,.08);
+    }
+
+    .progress-bar {
+      height: 100%;
+
+      width: 0;
+
+      border-radius: inherit;
+
+      background: var(--accent);
+
+      box-shadow: 0 0 8px var(--accent);
+
+      transition: width .8s ease;
+    }
+
+    .kpi:nth-child(3) .progress-bar {
+      background: var(--ok);
+      box-shadow: 0 0 8px var(--ok);
+    }
+
+    .kpi:nth-child(4) .progress-bar {
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+    }
+
+    /* =========================================================
+       BOTTOM CONTROL BAR
+       ========================================================= */
+
+    #controls {
+      position: absolute;
+
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+
+      transform:
+        translateX(-50%)
+        translateY(100px);
+
+      display: flex;
+      gap: 8px;
+
+      padding: 8px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 15px;
+
+      background: rgba(5,10,17,.84);
+
+      backdrop-filter: blur(14px);
+
+      opacity: 0;
+
+      transition:
+        transform .4s ease,
+        opacity .4s ease;
+    }
+
+    #controls.visible {
+      transform: translateX(-50%);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .control-btn {
+      min-width: 72px;
+
+      padding: 9px 10px;
+
+      border:
+        1px solid rgba(255,255,255,.08);
+
+      border-radius: 9px;
+
+      background:
+        rgba(255,255,255,.04);
+
+      color: var(--text);
+
+      font: inherit;
+      font-size: 10px;
+      font-weight: 600;
+
+      cursor: pointer;
+
+      transition: .2s ease;
+    }
+
+    .control-btn:hover {
+      border-color: var(--accent);
+      background: rgba(53,200,255,.1);
+    }
+
+    .control-btn:active {
+      transform: scale(.95);
+    }
+
+    .control-icon {
+      display: block;
+
+      margin-bottom: 3px;
+
       font-size: 16px;
     }
 
-    .panel-head h2 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .panel-head p {
-      margin: 2px 0 0;
-      font-size: 11px;
-      color: var(--text-dim);
+    /* =========================================================
+       EVENT LOG
+       ========================================================= */
+
+    #event-log {
+      position: absolute;
+
+      left: 18px;
+      top: 105px;
+
+      width: 190px;
+
+      opacity: 0;
+
+      transform: translateX(-210px);
+
+      transition: .4s ease;
     }
 
-    .panel-body {
-      padding: 14px 16px;
-      display: grid;
-      gap: 10px;
+    #event-log.visible {
+      opacity: 1;
+      transform: translateX(0);
     }
 
-    .metric {
+    .log-title {
+      margin-bottom: 8px;
+
+      font-size: 9px;
+      font-weight: 700;
+
+      color: var(--muted);
+
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .log-item {
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 13px;
-    }
-    .metric .label { color: var(--text-dim); }
-    .metric .value {
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .metric .value.count { color: var(--accent); font-size: 15px; }
+      align-items: flex-start;
+      gap: 7px;
 
-    /* ---- Hint (marker lost) ---- */
-    #hint {
-      position: fixed;
-      left: 50%;
-      bottom: 40px;
-      transform: translateX(-50%);
-      z-index: 12;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 18px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--bg-panel);
+      margin-bottom: 7px;
+
+      padding: 7px 8px;
+
+      border-left:
+        2px solid var(--accent);
+
+      border-radius: 5px;
+
+      background:
+        rgba(5,10,17,.65);
+
       backdrop-filter: blur(8px);
-      color: var(--text-dim);
-      font-size: 13px;
-      transition: opacity 0.3s;
-    }
-    #hint.hidden { opacity: 0; pointer-events: none; }
 
-    #hint .scan {
-      width: 16px; height: 16px;
-      border: 2px solid var(--accent);
-      border-radius: 4px;
-      position: relative;
-      animation: pulse 1.8s ease-in-out infinite;
+      font-size: 9px;
+      color: #aab9c8;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1); }
+
+    .log-item.success {
+      border-color: var(--ok);
+    }
+
+    .log-item.warning {
+      border-color: var(--warning);
+    }
+
+    .log-time {
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* =========================================================
+       SYSTEM INFO
+       ========================================================= */
+
+    #system-info {
+      position: absolute;
+
+      left: 18px;
+      bottom: max(16px, env(safe-area-inset-bottom));
+
+      display: flex;
+      gap: 10px;
+
+      opacity: .7;
+
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .system-item {
+      padding: 5px 8px;
+
+      border:
+        1px solid rgba(255,255,255,.08);
+
+      border-radius: 6px;
+
+      background: rgba(5,10,17,.55);
+
+      backdrop-filter: blur(8px);
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media (max-width: 700px) {
+
+      #dashboard {
+        top: 85px;
+        right: 10px;
+
+        width: 165px;
+
+        padding: 11px;
+      }
+
+      #event-log {
+        left: 10px;
+        top: 85px;
+
+        width: 150px;
+      }
+
+      #event-log .log-item:nth-child(n+3) {
+        display: none;
+      }
+
+      #controls {
+        bottom: max(10px, env(safe-area-inset-bottom));
+
+        width: calc(100vw - 20px);
+
+        justify-content: center;
+      }
+
+      .control-btn {
+        flex: 1;
+        min-width: 0;
+      }
+
+      #system-info {
+        display: none;
+      }
+
+      #scan-message {
+        bottom: 90px;
+      }
+    }
+
+    @media (max-width: 430px) {
+
+      #event-log {
+        display: none;
+      }
+
+      #dashboard {
+        width: 155px;
+      }
+
+      #tracking {
+        padding: 7px 9px;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      #hint .scan { animation: none; }
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
     }
   </style>
 </head>
+
 <body>
+
+  <!-- =========================================================
+       AR SCENE
+       ========================================================= -->
+
   <a-scene
-    vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true"
     embedded
-    arjs="sourceType: webcam; facingMode: environment; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; debugUIEnabled: false;">
-    <a-marker preset="hiro" id="hiro-marker"></a-marker>
+    vr-mode-ui="enabled: false"
+
+    renderer="
+      antialias: true;
+      logarithmicDepthBuffer: true;
+      colorManagement: true;
+    "
+
+    arjs="
+      sourceType: webcam;
+      facingMode: environment;
+
+      sourceWidth: 1280;
+      sourceHeight: 720;
+
+      displayWidth: 1280;
+      displayHeight: 720;
+
+      debugUIEnabled: false;
+    "
+
+    loading-screen="
+      enabled: false;
+    ">
+
+    <!-- Hiro Marker -->
+    <a-marker
+      id="hiro-marker"
+      preset="hiro"
+      smooth="true"
+      smoothCount="8"
+      smoothTolerance="0.01"
+      smoothThreshold="5">
+
+      <!-- =====================================================
+           INDUSTRIAL 4.0 MODEL
+           ===================================================== -->
+
+      <a-entity
+        id="factory-model"
+        visible="false"
+        scale="0.65 0.65 0.65">
+
+        <!-- Ground platform -->
+        <a-box
+          position="0 0.02 0"
+          width="2.5"
+          height="0.08"
+          depth="1.8"
+          color="#101a26"
+          material="
+            metalness: 0.8;
+            roughness: 0.3;
+          ">
+        </a-box>
+
+        <!-- Platform glowing edge -->
+        <a-box
+          position="0 0.07 0"
+          width="2.45"
+          height="0.025"
+          depth="1.75"
+          color="#35c8ff"
+          material="
+            emissive: #35c8ff;
+            emissiveIntensity: 2;
+          ">
+        </a-box>
+
+        <!-- Main machine body -->
+        <a-box
+          position="0 0.65 0"
+          width="1.45"
+          height="1.1"
+          depth="0.9"
+          color="#243446"
+          material="
+            metalness: 0.85;
+            roughness: 0.25;
+          ">
+        </a-box>
+
+        <!-- Machine front -->
+        <a-box
+          position="0 0.68 -0.46"
+          width="1.05"
+          height="0.65"
+          depth="0.035"
+          color="#081018"
+          material="
+            metalness: 0.5;
+            roughness: 0.25;
+          ">
+        </a-box>
+
+        <!-- Machine screen -->
+        <a-plane
+          position="0 0.83 -0.485"
+          width="0.62"
+          height="0.32"
+          material="
+            shader: flat;
+            color: #06141d;
+            opacity: .98;
+          ">
+
+          <!-- Screen glow -->
+          <a-plane
+            position="0 0 0.005"
+            width="0.57"
+            height="0.27"
+            material="
+              shader: flat;
+              color: #063244;
+              opacity: .95;
+            ">
+          </a-plane>
+
+        </a-plane>
+
+        <!-- Screen status bars -->
+        <a-box
+          position="-0.19 0.89 -0.51"
+          width="0.27"
+          height="0.025"
+          depth="0.01"
+          color="#46e0a0"
+          material="
+            emissive: #46e0a0;
+            emissiveIntensity: 2;
+          ">
+        </a-box>
+
+        <a-box
+          position="-0.19 0.82 -0.51"
+          width="0.40"
+          height="0.025"
+          depth="0.01"
+          color="#35c8ff"
+          material="
+            emissive: #35c8ff;
+            emissiveIntensity: 2;
+          ">
+        </a-box>
+
+        <a-box
+          position="-0.19 0.75 -0.51"
+          width="0.32"
+          height="0.025"
+          depth="0.01"
+          color="#7c5cff"
+          material="
+            emissive: #7c5cff;
+            emissiveIntensity: 2;
+          ">
+        </a-box>
+
+        <!-- Industrial pipes -->
+        <a-cylinder
+          position="-0.75 0.8 0"
+          radius="0.08"
+          height="1.1"
+          color="#566879"
+          material="
+            metalness: 0.9;
+            roughness: 0.2;
+          ">
+        </a-cylinder>
+
+        <a-cylinder
+          position="0.75 0.8 0"
+          radius="0.08"
+          height="1.1"
+          color="#566879"
+          material="
+            metalness: 0.9;
+            roughness: 0.2;
+          ">
+        </a-cylinder>
+
+        <!-- Warning lights -->
+        <a-sphere
+          id="machine-light"
+          position="0 1.28 0"
+          radius="0.08"
+          color="#46e0a0"
+          material="
+            emissive: #46e0a0;
+            emissiveIntensity: 4;
+          "
+          animation="
+            property: scale;
+            from: 0.85 0.85 0.85;
+            to: 1.15 1.15 1.15;
+            dir: alternate;
+            loop: true;
+            dur: 900;
+          ">
+        </a-sphere>
+
+        <!-- Rotating machine wheel -->
+        <a-torus
+          id="machine-wheel"
+          position="0.0 0.62 0.49"
+          rotation="90 0 0"
+          radius="0.34"
+          radius-tubular="0.07"
+          color="#35c8ff"
+          material="
+            emissive: #35c8ff;
+            emissiveIntensity: 1.7;
+            metalness: .8;
+          "
+          animation="
+            property: rotation;
+            from: 90 0 0;
+            to: 90 360 0;
+            loop: true;
+            dur: 1800;
+            easing: linear;
+          ">
+        </a-torus>
+
+        <!-- Wheel center -->
+        <a-cylinder
+          position="0 0.62 0.53"
+          rotation="90 0 0"
+          radius="0.1"
+          height="0.08"
+          color="#1a2634"
+          material="
+            metalness: .9;
+            roughness: .15;
+          ">
+        </a-cylinder>
+
+        <!-- Holographic vertical pillars -->
+        <a-box
+          position="-1.05 0.7 -0.65"
+          width="0.025"
+          height="1.35"
+          depth="0.025"
+          color="#35c8ff"
+          material="
+            emissive: #35c8ff;
+            emissiveIntensity: 4;
+            opacity: .8;
+          ">
+        </a-box>
+
+        <a-box
+          position="1.05 0.7 -0.65"
+          width="0.025"
+          height="1.35"
+          depth="0.025"
+          color="#35c8ff"
+          material="
+            emissive: #35c8ff;
+            emissiveIntensity: 4;
+            opacity: .8;
+          ">
+        </a-box>
+
+        <!-- Holographic top frame -->
+        <a-box
+          position="0 1.38 -0.65"
+          width="2.1"
+          height="0.025"
+          depth="0.025"
+          color="#35c8ff"
+          material="
+            emissive: #35c8ff;
+            emissiveIntensity: 4;
+            opacity: .8;
+          ">
+        </a-box>
+
+        <!-- Hologram rings -->
+        <a-torus
+          position="0 1.55 0"
+          rotation="90 0 0"
+          radius="0.85"
+          radius-tubular="0.015"
+          color="#35c8ff"
+          material="
+            emissive: #35c8ff;
+            emissiveIntensity: 3;
+            opacity: .45;
+            transparent: true;
+          "
+          animation="
+            property: rotation;
+            from: 90 0 0;
+            to: 90 360 0;
+            loop: true;
+            dur: 5000;
+            easing: linear;
+          ">
+        </a-torus>
+
+        <a-torus
+          position="0 1.55 0"
+          rotation="0 90 0"
+          radius="0.65"
+          radius-tubular="0.012"
+          color="#7c5cff"
+          material="
+            emissive: #7c5cff;
+            emissiveIntensity: 3;
+            opacity: .35;
+            transparent: true;
+          "
+          animation="
+            property: rotation;
+            from: 0 90 0;
+            to: 360 90 0;
+            loop: true;
+            dur: 7000;
+            easing: linear;
+          ">
+        </a-torus>
+
+        <!-- Data nodes -->
+        <a-sphere
+          position="-0.95 1.35 0"
+          radius="0.035"
+          color="#46e0a0"
+          material="
+            emissive: #46e0a0;
+            emissiveIntensity: 4;
+          "
+          animation="
+            property: scale;
+            from: .7 .7 .7;
+            to: 1.5 1.5 1.5;
+            dir: alternate;
+            loop: true;
+            dur: 1200;
+          ">
+        </a-sphere>
+
+        <a-sphere
+          position="0.95 1.35 0"
+          radius="0.035"
+          color="#ffc857"
+          material="
+            emissive: #ffc857;
+            emissiveIntensity: 4;
+          "
+          animation="
+            property: scale;
+            from: .7 .7 .7;
+            to: 1.5 1.5 1.5;
+            dir: alternate;
+            loop: true;
+            dur: 900;
+          ">
+        </a-sphere>
+
+        <!-- Floating data panel -->
+        <a-entity
+          id="floating-panel"
+          position="0 1.85 -0.1"
+          scale=".75 .75 .75">
+
+          <a-plane
+            width="1.7"
+            height=".65"
+            material="
+              shader: flat;
+              color: #06101a;
+              opacity: .92;
+              transparent: true;
+            ">
+          </a-plane>
+
+          <!-- Panel border -->
+          <a-plane
+            position="0 0 .005"
+            width="1.62"
+            height=".57"
+            material="
+              shader: flat;
+              color: #0a1c2a;
+              opacity: .9;
+            ">
+          </a-plane>
+
+          <!-- Fake graph -->
+          <a-box
+            position="-0.5 -0.1 .01"
+            width=".04"
+            height=".25"
+            depth=".01"
+            color="#35c8ff">
+          </a-box>
+
+          <a-box
+            position="-0.38 -0.02 .01"
+            width=".04"
+            height=".41"
+            depth=".01"
+            color="#35c8ff">
+          </a-box>
+
+          <a-box
+            position="-0.26 -0.07 .01"
+            width=".04"
+            height=".31"
+            depth=".01"
+            color="#46e0a0">
+          </a-box>
+
+          <a-box
+            position="-0.14 .02 .01"
+            width=".04"
+            height=".49"
+            depth=".01"
+            color="#46e0a0">
+          </a-box>
+
+          <a-box
+            position="-0.02 -.01 .01"
+            width=".04"
+            height=".43"
+            depth=".01"
+            color="#35c8ff">
+          </a-box>
+
+          <!-- Status dot -->
+          <a-sphere
+            position=".55 .19 .02"
+            radius=".04"
+            color="#46e0a0"
+            material="
+              emissive: #46e0a0;
+              emissiveIntensity: 4;
+            ">
+          </a-sphere>
+
+        </a-entity>
+
+      </a-entity>
+
+    </a-marker>
+
+    <!-- Camera -->
     <a-entity camera></a-entity>
+
   </a-scene>
 
-  <!-- Top status bar -->
-  <header id="statusbar">
-    <div class="brand">
-      <span class="dot"></span>
-      <div>
-        Industrie 4.0
-        <small>AR Mockup · Testansicht</small>
-      </div>
-    </div>
-    <div id="tracking">
-      <span class="indicator"></span>
-      <span class="tracking-text">Suche Marker …</span>
-    </div>
-  </header>
 
-  <!-- Info panel shown when marker is found -->
-  <div id="overlay">
-    <div class="panel-head">
-      <div class="icon">▣</div>
-      <div>
-        <h2>Marker erkannt</h2>
-        <p>Hiro-Preset · aktiv</p>
+  <!-- =========================================================
+       HTML HUD
+       ========================================================= -->
+
+  <div id="hud">
+
+    <!-- TOP BAR -->
+    <header id="topbar">
+
+      <div class="brand">
+        <span class="brand-dot"></span>
+
+        <div>
+          <div class="brand-title">
+            INDUSTRIE 4.0
+          </div>
+
+          <div class="brand-subtitle">
+            Augmented Reality Control Center
+          </div>
+        </div>
       </div>
+
+      <div id="tracking">
+
+        <span id="tracking-indicator"></span>
+
+        <span id="tracking-text">
+          Suche Marker …
+        </span>
+
+      </div>
+
+    </header>
+
+
+    <!-- SCANNER -->
+    <div id="scanner">
+
+      <div class="crosshair-corner"></div>
+
     </div>
-    <div class="panel-body">
-      <div class="metric">
-        <span class="label">Status</span>
-        <span class="value">Verbunden</span>
-      </div>
-      <div class="metric">
-        <span class="label">Erkannt (gesamt)</span>
-        <span class="value count" id="marker-count">0</span>
-      </div>
+
+
+    <!-- CROSSHAIR -->
+    <div id="crosshair">
+
+      <span class="cross-corner c1"></span>
+      <span class="cross-corner c2"></span>
+      <span class="cross-corner c3"></span>
+      <span class="cross-corner c4"></span>
+
     </div>
+
+
+    <!-- EVENT LOG -->
+    <section id="event-log">
+
+      <div class="log-title">
+        System Events
+      </div>
+
+      <div
+        class="log-item success"
+        id="log-1">
+        <span>●</span>
+
+        <div>
+          <span class="log-time">--:--:--</span><br>
+          System bereit
+        </div>
+      </div>
+
+      <div
+        class="log-item"
+        id="log-2">
+        <span>●</span>
+
+        <div>
+          <span class="log-time">--:--:--</span><br>
+          AR Engine gestartet
+        </div>
+      </div>
+
+      <div
+        class="log-item"
+        id="log-3">
+        <span>●</span>
+
+        <div>
+          <span class="log-time">--:--:--</span><br>
+          Warte auf Marker
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- KPI DASHBOARD -->
+    <section id="dashboard">
+
+      <div class="dashboard-header">
+
+        <div class="dashboard-title">
+          MASCHINE #A-104
+        </div>
+
+        <div class="live">
+          LIVE
+        </div>
+
+      </div>
+
+
+      <div class="kpi">
+
+        <div class="kpi-top">
+
+          <span class="kpi-name">
+            Auslastung
+          </span>
+
+          <span
+            class="kpi-value"
+            id="kpi-utilization">
+            87%
+          </span>
+
+        </div>
+
+        <div class="progress">
+          <div
+            class="progress-bar"
+            id="bar-utilization"
+            style="width:87%">
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="kpi">
+
+        <div class="kpi-top">
+
+          <span class="kpi-name">
+            Effizienz
+          </span>
+
+          <span
+            class="kpi-value"
+            id="kpi-efficiency">
+            94%
+          </span>
+
+        </div>
+
+        <div class="progress">
+          <div
+            class="progress-bar"
+            id="bar-efficiency"
+            style="width:94%">
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="kpi">
+
+        <div class="kpi-top">
+
+          <span class="kpi-name">
+            Temperatur
+          </span>
+
+          <span
+            class="kpi-value"
+            id="kpi-temperature">
+            68°C
+          </span>
+
+        </div>
+
+        <div class="progress">
+          <div
+            class="progress-bar"
+            id="bar-temperature"
+            style="width:68%">
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="kpi">
+
+        <div class="kpi-top">
+
+          <span class="kpi-name">
+            Produktion
+          </span>
+
+          <span
+            class="kpi-value"
+            id="kpi-production">
+            1.284
+          </span>
+
+        </div>
+
+        <div class="progress">
+          <div
+            class="progress-bar"
+            style="width:76%">
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- BOTTOM CONTROLS -->
+    <nav id="controls">
+
+      <button
+        class="control-btn"
+        id="btn-rotate">
+
+        <span class="control-icon">
+          ↻
+        </span>
+
+        Drehen
+
+      </button>
+
+
+      <button
+        class="control-btn"
+        id="btn-explode">
+
+        <span class="control-icon">
+          ◈
+        </span>
+
+        Explode
+
+      </button>
+
+
+      <button
+        class="control-btn"
+        id="btn-data">
+
+        <span class="control-icon">
+          ▦
+        </span>
+
+        Daten
+
+      </button>
+
+
+      <button
+        class="control-btn"
+        id="btn-reset">
+
+        <span class="control-icon">
+          ⟳
+        </span>
+
+        Reset
+
+      </button>
+
+    </nav>
+
+
+    <!-- SCAN MESSAGE -->
+    <div id="scan-message">
+
+      <span class="scan-icon"></span>
+
+      <span id="scan-message-text">
+        Hiro-Marker in den Kamerabereich halten
+      </span>
+
+    </div>
+
+
+    <!-- SYSTEM INFO -->
+    <div id="system-info">
+
+      <span class="system-item">
+        FPS:
+        <strong id="fps">--</strong>
+      </span>
+
+      <span class="system-item">
+        TRACK:
+        <strong id="track-time">0.0s</strong>
+      </span>
+
+      <span class="system-item">
+        MARKER:
+        <strong id="marker-count">0</strong>
+      </span>
+
+    </div>
+
   </div>
 
-  <!-- Hint shown when no marker -->
-  <div id="hint">
-    <span class="scan"></span>
-    Hiro-Marker in den Kamerabereich halten
-  </div>
+
+  <!-- =========================================================
+       JAVASCRIPT
+       ========================================================= -->
 
   <script>
-    const overlay = document.getElementById('overlay');
-    const hint = document.getElementById('hint');
-    const tracking = document.getElementById('tracking');
-    const trackingText = document.querySelector('.tracking-text');
-    const hiroMarker = document.getElementById('hiro-marker');
-    const markerCount = document.getElementById('marker-count');
-    let markerFoundCount = 0;
+    (() => {
 
-    hiroMarker.addEventListener('markerFound', () => {
-      console.debug('Marker found');
-      markerFoundCount += 1;
-      markerCount.textContent = markerFoundCount;
-      overlay.classList.add('visible');
-      hint.classList.add('hidden');
-      tracking.classList.add('active');
-      trackingText.textContent = 'Marker aktiv';
-    });
+      "use strict";
 
-    hiroMarker.addEventListener('markerLost', () => {
-      console.debug('Marker lost');
-      overlay.classList.remove('visible');
-      hint.classList.remove('hidden');
-      tracking.classList.remove('active');
-      trackingText.textContent = 'Suche Marker …';
-    });
+      /* -------------------------------------------------------
+         ELEMENTS
+         ------------------------------------------------------- */
 
-    /* global functions for debugging */
-    window.fireEventMarkerFound = () => {
-      hiroMarker.dispatchEvent(new CustomEvent('markerFound'));
-    }
-    window.fireEventMarkerLost = () => {
-      hiroMarker.dispatchEvent(new CustomEvent('markerLost'));
-    }
+      const marker =
+        document.getElementById("hiro-marker");
+
+      const model =
+        document.getElementById("factory-model");
+
+      const dashboard =
+        document.getElementById("dashboard");
+
+      const controls =
+        document.getElementById("controls");
+
+      const eventLog =
+        document.getElementById("event-log");
+
+      const scanner =
+        document.getElementById("scanner");
+
+      const crosshair =
+        document.getElementById("crosshair");
+
+      const scanMessage =
+        document.getElementById("scan-message");
+
+      const scanMessageText =
+        document.getElementById("scan-message-text");
+
+      const tracking =
+        document.getElementById("tracking");
+
+      const trackingText =
+        document.getElementById("tracking-text");
+
+      const markerCountElement =
+        document.getElementById("marker-count");
+
+      const fpsElement =
+        document.getElementById("fps");
+
+      const trackTimeElement =
+        document.getElementById("track-time");
+
+
+      /* -------------------------------------------------------
+         STATE
+         ------------------------------------------------------- */
+
+      let markerFound = false;
+
+      let markerCount = 0;
+
+      let trackingStarted = 0;
+
+      let modelRotation = 0;
+
+      let exploded = false;
+
+      let dataVisible = true;
+
+      let lastFrame = performance.now();
+
+      let frameCounter = 0;
+
+      let fpsTimer = performance.now();
+
+
+      /* -------------------------------------------------------
+         HELPERS
+         ------------------------------------------------------- */
+
+      function now() {
+
+        return new Date().toLocaleTimeString(
+          "de-DE",
+          {
+            hour12: false
+          }
+        );
+
+      }
+
+
+      function addLog(
+        message,
+        type = ""
+      ) {
+
+        const item =
+          document.createElement("div");
+
+        item.className =
+          "log-item " + type;
+
+        item.innerHTML = `
+          <span>●</span>
+          <div>
+            <span class="log-time">
+              ${now()}
+            </span><br>
+            ${message}
+          </div>
+        `;
+
+        eventLog.appendChild(item);
+
+        while (eventLog.children.length > 4) {
+
+          eventLog.removeChild(
+            eventLog.children[1]
+          );
+
+        }
+
+      }
+
+
+      function setTracking(
+        active
+      ) {
+
+        markerFound = active;
+
+        if (active) {
+
+          tracking.classList.add("active");
+
+          trackingText.textContent =
+            "Marker aktiv";
+
+          scanner.classList.add(
+            "marker-active"
+          );
+
+          crosshair.style.opacity =
+            "0";
+
+          scanMessage.classList.add(
+            "hidden"
+          );
+
+          dashboard.classList.add(
+            "visible"
+          );
+
+          controls.classList.add(
+            "visible"
+          );
+
+          eventLog.classList.add(
+            "visible"
+          );
+
+          model.setAttribute(
+            "visible",
+            "true"
+          );
+
+          trackingStarted =
+            performance.now();
+
+        } else {
+
+          tracking.classList.remove(
+            "active"
+          );
+
+          trackingText.textContent =
+            "Suche Marker …";
+
+          scanner.classList.remove(
+            "marker-active"
+          );
+
+          crosshair.style.opacity =
+            ".45";
+
+          scanMessage.classList.remove(
+            "hidden"
+          );
+
+          dashboard.classList.remove(
+            "visible"
+          );
+
+          controls.classList.remove(
+            "visible"
+          );
+
+          eventLog.classList.remove(
+            "visible"
+          );
+
+          model.setAttribute(
+            "visible",
+            "false"
+          );
+
+        }
+
+      }
+
+
+      /* -------------------------------------------------------
+         MARKER FOUND
+         ------------------------------------------------------- */
+
+      marker.addEventListener(
+        "markerFound",
+        () => {
+
+          markerCount++;
+
+          markerCountElement.textContent =
+            markerCount;
+
+          setTracking(true);
+
+          scanMessageText.textContent =
+            "Industrieanlage erkannt · Live-Daten aktiv";
+
+          addLog(
+            "Hiro-Marker erkannt",
+            "success"
+          );
+
+          addLog(
+            "Maschine #A-104 verbunden",
+            "success"
+          );
+
+        }
+      );
+
+
+      /* -------------------------------------------------------
+         MARKER LOST
+         ------------------------------------------------------- */
+
+      marker.addEventListener(
+        "markerLost",
+        () => {
+
+          setTracking(false);
+
+          scanMessageText.textContent =
+            "Hiro-Marker in den Kamerabereich halten";
+
+          addLog(
+            "Tracking verloren",
+            "warning"
+          );
+
+        }
+      );
+
+
+      /* -------------------------------------------------------
+         ROTATE
+         ------------------------------------------------------- */
+
+      document
+        .getElementById("btn-rotate")
+        .addEventListener(
+          "click",
+          () => {
+
+            modelRotation += 90;
+
+            model.object3D.rotation.y =
+              THREE.MathUtils.degToRad(
+                modelRotation
+              );
+
+            addLog(
+              "3D-Modell gedreht"
+            );
+
+          }
+        );
+
+
+      /* -------------------------------------------------------
+         EXPLODE VIEW
+         ------------------------------------------------------- */
+
+      document
+        .getElementById("btn-explode")
+        .addEventListener(
+          "click",
+          () => {
+
+            exploded = !exploded;
+
+            const machine =
+              model.querySelectorAll(
+                "a-box, a-cylinder, a-torus"
+              );
+
+            machine.forEach(
+              (element, index) => {
+
+                if (
+                  index < 8
+                ) {
+
+                  const base =
+                    element.getAttribute(
+                      "position"
+                    );
+
+                  if (!base) return;
+
+                  const x =
+                    base.x;
+
+                  const y =
+                    base.y;
+
+                  const z =
+                    base.z;
+
+                  const offset =
+                    exploded
+                      ? (index % 2 === 0 ? 0.18 : -0.18)
+                      : 0;
+
+                  element.setAttribute(
+                    "animation__explode",
+                    {
+                      property:
+                        "position",
+                      to:
+                        `${x + offset} ${y} ${z}`,
+                      dur:
+                        500,
+                      easing:
+                        "easeOutCubic"
+                    }
+                  );
+
+                }
+
+              }
+            );
+
+            addLog(
+              exploded
+                ? "Exploded View aktiviert"
+                : "Exploded View deaktiviert"
+            );
+
+          }
+        );
+
+
+      /* -------------------------------------------------------
+         DATA TOGGLE
+         ------------------------------------------------------- */
+
+      document
+        .getElementById("btn-data")
+        .addEventListener(
+          "click",
+          () => {
+
+            dataVisible =
+              !dataVisible;
+
+            dashboard.style.display =
+              dataVisible
+                ? "block"
+                : "none";
+
+            const panel =
+              document.getElementById(
+                "floating-panel"
+              );
+
+            if (panel) {
+
+              panel.setAttribute(
+                "visible",
+                dataVisible
+              );
+
+            }
+
+            addLog(
+              dataVisible
+                ? "Live-Daten eingeblendet"
+                : "Live-Daten ausgeblendet"
+            );
+
+          }
+        );
+
+
+      /* -------------------------------------------------------
+         RESET
+         ------------------------------------------------------- */
+
+      document
+        .getElementById("btn-reset")
+        .addEventListener(
+          "click",
+          () => {
+
+            modelRotation = 0;
+
+            exploded = false;
+
+            dataVisible = true;
+
+            model.object3D.rotation.y = 0;
+
+            dashboard.style.display =
+              "block";
+
+            const panel =
+              document.getElementById(
+                "floating-panel"
+              );
+
+            if (panel) {
+
+              panel.setAttribute(
+                "visible",
+                "true"
+              );
+
+            }
+
+            addLog(
+              "Systemparameter zurückgesetzt",
+              "success"
+            );
+
+          }
+        );
+
+
+      /* -------------------------------------------------------
+         SIMULATED LIVE DATA
+         ------------------------------------------------------- */
+
+      function updateLiveData() {
+
+        if (!markerFound) {
+          return;
+        }
+
+        const utilization =
+          Math.round(
+            82 +
+            Math.random() * 12
+          );
+
+        const efficiency =
+          Math.round(
+            90 +
+            Math.random() * 8
+          );
+
+        const temperature =
+          Math.round(
+            63 +
+            Math.random() * 10
+          );
+
+        const production =
+          1250 +
+          Math.floor(
+            Math.random() * 70
+          );
+
+
+        document.getElementById(
+          "kpi-utilization"
+        ).textContent =
+          utilization + "%";
+
+        document.getElementById(
+          "bar-utilization"
+        ).style.width =
+          utilization + "%";
+
+
+        document.getElementById(
+          "kpi-efficiency"
+        ).textContent =
+          efficiency + "%";
+
+        document.getElementById(
+          "bar-efficiency"
+        ).style.width =
+          efficiency + "%";
+
+
+        document.getElementById(
+          "kpi-temperature"
+        ).textContent =
+          temperature + "°C";
+
+        document.getElementById(
+          "bar-temperature"
+        ).style.width =
+          temperature + "%";
+
+
+        document.getElementById(
+          "kpi-production"
+        ).textContent =
+          production.toLocaleString(
+            "de-DE"
+          );
+
+      }
+
+
+      setInterval(
+        updateLiveData,
+        1200
+      );
+
+
+      /* -------------------------------------------------------
+         FPS COUNTER
+         ------------------------------------------------------- */
+
+      function animationLoop(
+        timestamp
+      ) {
+
+        frameCounter++;
+
+        if (
+          timestamp -
+          fpsTimer >=
+          1000
+        ) {
+
+          fpsElement.textContent =
+            frameCounter;
+
+          frameCounter = 0;
+
+          fpsTimer =
+            timestamp;
+
+        }
+
+
+        if (
+          markerFound &&
+          trackingStarted
+        ) {
+
+          const elapsed =
+            (
+              timestamp -
+              trackingStarted
+            ) / 1000;
+
+          trackTimeElement.textContent =
+            elapsed.toFixed(1) + "s";
+
+        }
+
+
+        lastFrame =
+          timestamp;
+
+        requestAnimationFrame(
+          animationLoop
+        );
+
+      }
+
+      requestAnimationFrame(
+        animationLoop
+      );
+
+
+      /* -------------------------------------------------------
+         DEBUG FUNCTIONS
+         ------------------------------------------------------- */
+
+      window.fireEventMarkerFound =
+        () => {
+
+          marker.dispatchEvent(
+            new CustomEvent(
+              "markerFound"
+            )
+          );
+
+        };
+
+
+      window.fireEventMarkerLost =
+        () => {
+
+          marker.dispatchEvent(
+            new CustomEvent(
+              "markerLost"
+            )
+          );
+
+        };
+
+
+      /* -------------------------------------------------------
+         INITIAL LOG
+         ------------------------------------------------------- */
+
+      setTimeout(
+        () => {
+
+          addLog(
+            "AR Engine bereit",
+            "success"
+          );
+
+        },
+        500
+      );
+
+
+      setTimeout(
+        () => {
+
+          addLog(
+            "Kamera wird initialisiert"
+          );
+
+        },
+        1000
+      );
+
+
+    })();
   </script>
+
 </body>
 </html>
