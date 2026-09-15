@@ -3,38 +3,217 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Industrie 4.0 AR Mockup - Testpage</title>
+  <title>Industrie 4.0 · AR Mockup</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
   <style>
-    :root { color-scheme: dark; }
+    :root {
+      color-scheme: dark;
+      --bg-panel: rgba(14, 18, 26, 0.82);
+      --border: rgba(120, 200, 255, 0.28);
+      --accent: #35c8ff;
+      --accent-dim: rgba(53, 200, 255, 0.14);
+      --text: #eaf2fb;
+      --text-dim: #8ea3ba;
+      --ok: #46d998;
+      --idle: #6b7c92;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: var(--font);
       overflow: hidden;
+      background: #05070b;
     }
 
-    #overlay {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      z-index: 10;
-      min-width: 220px;
-      padding: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(2px);
-      font-size: 16px;
-      color: #fff;
-    }
-
-    /* Kamera-/Canvas-Darstellung */
     video, canvas {
       width: 100vw !important;
       height: 100vh !important;
-      object-fit: contain !important; /* weniger Zoom-Eindruck */
+      object-fit: contain !important;
+    }
+
+    /* ---- Top status bar ---- */
+    #statusbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 18px;
+      background: linear-gradient(180deg, rgba(5,7,11,0.85) 0%, rgba(5,7,11,0) 100%);
+      pointer-events: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .brand .dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .brand small {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-dim);
+      letter-spacing: 0.4px;
+    }
+
+    /* ---- Tracking pill ---- */
+    #tracking {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      transition: border-color 0.25s, color 0.25s;
+    }
+
+    #tracking .indicator {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--idle);
+      transition: background 0.25s, box-shadow 0.25s;
+    }
+
+    #tracking.active { border-color: rgba(70, 217, 152, 0.5); }
+    #tracking.active .indicator {
+      background: var(--ok);
+      box-shadow: 0 0 10px var(--ok);
+    }
+
+    /* ---- Info panel (marker found) ---- */
+    #overlay {
+      position: fixed;
+      left: 50%;
+      bottom: 96px;
+      transform: translateX(-50%) translateY(12px);
+      z-index: 15;
+      width: min(340px, calc(100vw - 36px));
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      color: var(--text);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+      overflow: hidden;
+    }
+
+    #overlay.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .panel-head .icon {
+      display: grid;
+      place-items: center;
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 16px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .panel-head p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .panel-body {
+      padding: 14px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .metric .label { color: var(--text-dim); }
+    .metric .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .metric .value.count { color: var(--accent); font-size: 15px; }
+
+    /* ---- Hint (marker lost) ---- */
+    #hint {
+      position: fixed;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(8px);
+      color: var(--text-dim);
+      font-size: 13px;
+      transition: opacity 0.3s;
+    }
+    #hint.hidden { opacity: 0; pointer-events: none; }
+
+    #hint .scan {
+      width: 16px; height: 16px;
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      position: relative;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #hint .scan { animation: none; }
     }
   </style>
 </head>
@@ -48,12 +227,53 @@
     <a-entity camera></a-entity>
   </a-scene>
 
+  <!-- Top status bar -->
+  <header id="statusbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        Industrie 4.0
+        <small>AR Mockup · Testansicht</small>
+      </div>
+    </div>
+    <div id="tracking">
+      <span class="indicator"></span>
+      <span class="tracking-text">Suche Marker …</span>
+    </div>
+  </header>
+
+  <!-- Info panel shown when marker is found -->
   <div id="overlay">
-    <div id="marker-count">Times the Marker was found: 0</div>
+    <div class="panel-head">
+      <div class="icon">▣</div>
+      <div>
+        <h2>Marker erkannt</h2>
+        <p>Hiro-Preset · aktiv</p>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="metric">
+        <span class="label">Status</span>
+        <span class="value">Verbunden</span>
+      </div>
+      <div class="metric">
+        <span class="label">Erkannt (gesamt)</span>
+        <span class="value count" id="marker-count">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hint shown when no marker -->
+  <div id="hint">
+    <span class="scan"></span>
+    Hiro-Marker in den Kamerabereich halten
   </div>
 
   <script>
     const overlay = document.getElementById('overlay');
+    const hint = document.getElementById('hint');
+    const tracking = document.getElementById('tracking');
+    const trackingText = document.querySelector('.tracking-text');
     const hiroMarker = document.getElementById('hiro-marker');
     const markerCount = document.getElementById('marker-count');
     let markerFoundCount = 0;
@@ -61,24 +281,27 @@
     hiroMarker.addEventListener('markerFound', () => {
       console.debug('Marker found');
       markerFoundCount += 1;
-      markerCount.textContent = `Times the Marker was found: ${markerFoundCount}`;
-      overlay.style.display = 'block';
+      markerCount.textContent = markerFoundCount;
+      overlay.classList.add('visible');
+      hint.classList.add('hidden');
+      tracking.classList.add('active');
+      trackingText.textContent = 'Marker aktiv';
     });
 
     hiroMarker.addEventListener('markerLost', () => {
       console.debug('Marker lost');
-      overlay.style.display = 'none';
+      overlay.classList.remove('visible');
+      hint.classList.remove('hidden');
+      tracking.classList.remove('active');
+      trackingText.textContent = 'Suche Marker …';
     });
 
     /* global functions for debugging */
     window.fireEventMarkerFound = () => {
-      const event = new CustomEvent('markerFound');
-      hiroMarker.dispatchEvent(event);
+      hiroMarker.dispatchEvent(new CustomEvent('markerFound'));
     }
-
     window.fireEventMarkerLost = () => {
-      const event = new CustomEvent('markerLost');
-      hiroMarker.dispatchEvent(event);
+      hiroMarker.dispatchEvent(new CustomEvent('markerLost'));
     }
   </script>
 </body>
